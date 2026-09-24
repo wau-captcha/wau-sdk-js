@@ -1,4 +1,4 @@
-import type { ChallengeType } from "./client.js";
+import type { ChallengeType } from "./constants.js";
 import { renderWidget, type WidgetHandle } from "./widget.js";
 
 /**

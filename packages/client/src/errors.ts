@@ -1,9 +1,10 @@
 /**
  * A call to WAU Captcha that failed. `code` is the reason the service gave, such as
- * "SITE_KEY_INVALID" or "ORIGIN_NOT_ALLOWED", or one of "NETWORK_ERROR", "TIMEOUT" and
- * "INVALID_RESPONSE" when no usable reply arrived.
+ * ErrorCode.SITE_KEY_INVALID, or one the SDK raised when no usable reply arrived, such as
+ * ErrorCode.NETWORK_ERROR. Compare it with the ErrorCode constants.
  */
 export class WauCaptchaError extends Error {
+  /** An ErrorCode value; a string, so reasons newer than this SDK still come through. */
   readonly code: string;
   /** HTTP status of the reply; 0 when there was none. */
   readonly status: number;

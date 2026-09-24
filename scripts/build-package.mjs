@@ -1,6 +1,9 @@
-// Builds one package from its src/: ESM and CommonJS bundles, type declarations from the
-// package's tsconfig.json, and with --global <Name> a minified <script> build exposing window.<Name>.
-// Run it from the package directory: node ../../scripts/build-package.mjs [--global Name] [--platform node]
+// Builds one package from its src/: ESM and CommonJS bundles that import their dependencies,
+// type declarations from the package's tsconfig.json, and with --global <Name> a minified
+// <script> build exposing window.<Name>. With --client-entry <name>, src/<name>.tsx, which starts
+// with "use client", becomes a bundle of its own that index imports: React Server Components can
+// then use the constants of index while the component renders on the client. Run it from the package
+// directory: node ../../scripts/build-package.mjs [--global Name] [--platform node] [--client-entry name]
 import { execFileSync } from "node:child_process";
 import { existsSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -13,12 +16,35 @@ const option = (name) => {
 };
 const globalName = option("--global");
 const platform = option("--platform") ?? "neutral";
+const clientEntry = option("--client-entry");
 
 rmSync("dist", { recursive: true, force: true });
 
-const shared = { entryPoints: ["src/index.ts"], bundle: true, target: "es2020", platform, logLevel: "warning" };
-await build({ ...shared, format: "esm", outfile: "dist/index.js" });
-await build({ ...shared, format: "cjs", outfile: "dist/index.cjs" });
+const shared = { bundle: true, packages: "external", target: "es2020", platform, logLevel: "warning" };
+for (const [format, extension] of [["esm", ".js"], ["cjs", ".cjs"]]) {
+  // index keeps importing the client entry, from the bundle of the same format.
+  const importClientEntry = {
+    name: "client-entry",
+    setup(builder) {
+      builder.onResolve({ filter: new RegExp(String.raw`^\./${clientEntry}\.js$`) }, () => ({ path: `./${clientEntry}${extension}`, external: true }));
+    },
+  };
+  await build({
+    ...shared,
+    entryPoints: ["src/index.ts"],
+    format,
+    outfile: `dist/index${extension}`,
+    plugins: clientEntry ? [importClientEntry] : [],
+  });
+  if (clientEntry) {
+    await build({
+      ...shared,
+      entryPoints: [`src/${clientEntry}.tsx`],
+      format,
+      outfile: `dist/${clientEntry}${extension}`,
+    });
+  }
+}
 
 if (globalName && existsSync("src/global.ts")) {
   await build({

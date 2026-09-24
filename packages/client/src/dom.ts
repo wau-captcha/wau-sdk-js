@@ -1,15 +1,26 @@
-/** Creates an element with an optional class and inline style. */
-export function element<Tag extends keyof HTMLElementTagNameMap>(tag: Tag, className?: string, style?: string): HTMLElementTagNameMap[Tag] {
+import { WIDGET_STYLES } from "./styles.js";
+
+/** Creates an element with an optional class. */
+export function createElement<Tag extends keyof HTMLElementTagNameMap>(tag: Tag, className?: string): HTMLElementTagNameMap[Tag] {
   const node = document.createElement(tag);
   if (className) node.className = className;
-  if (style) node.style.cssText = style;
   return node;
 }
 
-/** A plain button that never submits the form around it. */
-export function button(text: string, className: string): HTMLButtonElement {
-  const node = element("button", className, "padding:6px 12px;border:1px solid #c7c7c7;border-radius:6px;background:#fff;font:inherit;cursor:pointer");
+/** A widget button that never submits the form around it. */
+export function createButton(text: string, variant: "primary" | "outline"): HTMLButtonElement {
+  const node = createElement("button", "wau-captcha__button");
   node.type = "button";
+  node.dataset.variant = variant;
   node.textContent = text;
   return node;
+}
+
+/** Adds the stylesheet of the widget to the page, once. */
+export function addStyles() {
+  if (document.getElementById("wau-captcha-styles")) return;
+  const style = createElement("style");
+  style.id = "wau-captcha-styles";
+  style.textContent = WIDGET_STYLES;
+  document.head.append(style);
 }

@@ -4,6 +4,10 @@
     "module": "ES2020",
     "moduleResolution": "bundler",
     "lib": ["ES2020", "DOM"],
+    "jsx": "react-jsx",
+    "paths": {
+      "@wau-captcha/client": ["./packages/client/src/index.ts"]
+    },
     "strict": true,
     "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
@@ -15,5 +19,5 @@
     "noEmit": true,
     "skipLibCheck": true
   },
-  "include": ["packages/*/src/**/*.ts"]
+  "include": ["packages/*/src/**/*.ts", "packages/*/src/**/*.tsx"]
 }

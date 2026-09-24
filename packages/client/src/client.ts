@@ -1,17 +1,12 @@
+import { ChallengeType } from "./constants.js";
 import { normalizeBaseUrl, requestJson } from "./http.js";
-
-/**
- * "image_distort" is distorted text in a PNG; "motion_noise" hides the text in a short
- * animated GIF of moving dots. A key's plan decides which ones it may request.
- */
-export type ChallengeType = "image_distort" | "motion_noise";
 
 export interface WauCaptchaClientOptions {
   /** Public site key of the API key, "pk_…". Safe to ship to browsers. */
   siteKey: string;
   /** Address of the WAU Captcha gateway, e.g. https://captcha.example.com. */
   baseUrl: string;
-  /** Type asked for when newChallenge names none. Default "image_distort". */
+  /** Type asked for when newChallenge names none. Default ChallengeType.IMAGE_DISTORT. */
   challengeType?: ChallengeType | undefined;
   /** How long to wait for each reply. Default 10 000. */
   timeoutMs?: number | undefined;
@@ -22,7 +17,7 @@ export interface WauCaptchaClientOptions {
 export interface Challenge {
   /** Pass it to verify together with the answer. */
   id: string;
-  type: string;
+  type: ChallengeType;
   /** A data: URL, ready for an <img> src. */
   imageUrl: string;
   /** "image/png" or "image/gif". */
@@ -40,7 +35,7 @@ export type VerifyResult = { success: true; token: string; expiresAt: Date } | {
 /** GET /challenge/new, as the service sends it. */
 interface ChallengeReply {
   challenge_id: string;
-  challenge_type: string;
+  challenge_type: ChallengeType;
   /** The image, base64-encoded. */
   image: string;
   mime_type: string;
@@ -72,7 +67,7 @@ export class WauCaptchaClient {
     }
     this.siteKey = options.siteKey.trim();
     this.baseUrl = normalizeBaseUrl(options.baseUrl);
-    this.challengeType = options.challengeType ?? "image_distort";
+    this.challengeType = options.challengeType ?? ChallengeType.IMAGE_DISTORT;
     this.timeoutMs = options.timeoutMs ?? 10_000;
     this.fetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   }

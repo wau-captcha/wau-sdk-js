@@ -1,3 +1,4 @@
+import { ErrorCode } from "./constants.js";
 import { WauCaptchaError } from "./errors.js";
 
 export interface RequestOptions {
@@ -21,7 +22,7 @@ interface ErrorReply {
  */
 export async function requestJson<T>({ fetch, url, init, timeoutMs, signal }: RequestOptions): Promise<T> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(new WauCaptchaError("TIMEOUT", `no reply within ${timeoutMs} ms`)), timeoutMs);
+  const timer = setTimeout(() => controller.abort(new WauCaptchaError(ErrorCode.TIMEOUT, `no reply within ${timeoutMs} ms`)), timeoutMs);
   const forwardAbort = () => controller.abort(signal?.reason);
   if (signal?.aborted) forwardAbort();
   signal?.addEventListener("abort", forwardAbort, { once: true });
@@ -32,7 +33,7 @@ export async function requestJson<T>({ fetch, url, init, timeoutMs, signal }: Re
   } catch (error) {
     if (controller.signal.reason instanceof WauCaptchaError) throw controller.signal.reason;
     if (signal?.aborted) throw error;
-    throw new WauCaptchaError("NETWORK_ERROR", `could not reach WAU Captcha at ${url}: ${describe(error)}`);
+    throw new WauCaptchaError(ErrorCode.NETWORK_ERROR, `could not reach WAU Captcha at ${url}: ${describeError(error)}`);
   } finally {
     clearTimeout(timer);
     signal?.removeEventListener("abort", forwardAbort);
@@ -42,7 +43,7 @@ export async function requestJson<T>({ fetch, url, init, timeoutMs, signal }: Re
   try {
     body = await response.json();
   } catch {
-    throw new WauCaptchaError("INVALID_RESPONSE", `WAU Captcha answered ${response.status} without JSON`, response.status);
+    throw new WauCaptchaError(ErrorCode.INVALID_RESPONSE, `WAU Captcha answered ${response.status} without JSON`, response.status);
   }
   if (!response.ok) throw errorFromReply(body, response);
   return body as T;
@@ -52,14 +53,14 @@ export async function requestJson<T>({ fetch, url, init, timeoutMs, signal }: Re
 function errorFromReply(body: unknown, response: Response): WauCaptchaError {
   const reply: ErrorReply = body && typeof body === "object" ? body : {};
   return new WauCaptchaError(
-    typeof reply.reason === "string" && reply.reason ? reply.reason : "UNKNOWN",
+    typeof reply.reason === "string" && reply.reason ? reply.reason : ErrorCode.UNKNOWN,
     typeof reply.message === "string" && reply.message ? reply.message : response.statusText,
     response.status,
     reply.metadata && typeof reply.metadata === "object" ? (reply.metadata as Record<string, string>) : {},
   );
 }
 
-function describe(error: unknown): string {
+function describeError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 

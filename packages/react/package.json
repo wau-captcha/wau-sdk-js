@@ -1,0 +1,55 @@
+{
+  "name": "@wau-captcha/react",
+  "version": "1.0.0",
+  "description": "React component for WAU Captcha: <WauCaptcha />, inline or in a modal, with the token in your form.",
+  "license": "MIT",
+  "author": "WAU Captcha",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "node ../../scripts/build-package.mjs --platform browser --client-entry wau-captcha",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@wau-captcha/client": "^1.1.0"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0"
+  },
+  "keywords": [
+    "captcha",
+    "wau-captcha",
+    "bot-protection",
+    "react"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wau-captcha/wau-sdk-js.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://github.com/wau-captcha/wau-sdk-js#readme",
+  "bugs": "https://github.com/wau-captcha/wau-sdk-js/issues"
+}
