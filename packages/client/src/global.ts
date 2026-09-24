@@ -1,6 +1,6 @@
 // Entry of the <script> build: exposes window.WauCaptcha and renders every
 // [data-wau-captcha] element once the page has loaded.
-import { autoRender } from "./widget.js";
+import { autoRender } from "./auto-render.js";
 
 export * from "./index.js";
 

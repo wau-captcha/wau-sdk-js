@@ -4,20 +4,17 @@
  * "INVALID_RESPONSE" when no usable reply arrived.
  */
 export class WauCaptchaError extends Error {
-  /**
-   * @param {string} code
-   * @param {string} message
-   * @param {number} [status] HTTP status of the reply; 0 when there was none.
-   * @param {Record<string, string>} [metadata] Details the service attached, e.g. `field`.
-   */
-  constructor(code, message, status = 0, metadata = {}) {
+  readonly code: string;
+  /** HTTP status of the reply; 0 when there was none. */
+  readonly status: number;
+  /** Details the service attached, e.g. `field`. */
+  readonly metadata: Record<string, string>;
+
+  constructor(code: string, message: string, status = 0, metadata: Record<string, string> = {}) {
     super(message);
     this.name = "WauCaptchaError";
-    /** @type {string} */
     this.code = code;
-    /** @type {number} */
     this.status = status;
-    /** @type {Record<string, string>} */
     this.metadata = metadata;
   }
 }

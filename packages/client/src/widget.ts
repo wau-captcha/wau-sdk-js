@@ -1,39 +1,39 @@
-import { WauCaptchaClient } from "./client.js";
+import { type Challenge, WauCaptchaClient, type WauCaptchaClientOptions } from "./client.js";
+import { button, element } from "./dom.js";
 import { WauCaptchaError } from "./errors.js";
 
-/**
- * @typedef {Object} WidgetLabels
- * @property {string} prompt
- * @property {string} verify
- * @property {string} refresh
- * @property {string} loading
- * @property {string} checking
- * @property {string} wrong
- * @property {string} verified
- * @property {string} expired
- * @property {string} failed
- * @property {string} imageAlt
- */
+export interface WidgetLabels {
+  prompt: string;
+  verify: string;
+  refresh: string;
+  loading: string;
+  checking: string;
+  wrong: string;
+  verified: string;
+  expired: string;
+  failed: string;
+  imageAlt: string;
+}
 
-/**
- * @typedef {import("./client.js").WauCaptchaClientOptions & {
- *   onSuccess?: (token: string) => void,
- *   onExpired?: () => void,
- *   onError?: (error: WauCaptchaError) => void,
- *   inputName?: string,
- *   labels?: Partial<WidgetLabels>,
- * }} WidgetOptions
- */
+export interface WidgetOptions extends WauCaptchaClientOptions {
+  onSuccess?: ((token: string) => void) | undefined;
+  onExpired?: (() => void) | undefined;
+  onError?: ((error: WauCaptchaError) => void) | undefined;
+  /** Name of the hidden input that carries the token. Default "wau-captcha-token". */
+  inputName?: string | undefined;
+  labels?: Partial<WidgetLabels> | undefined;
+}
 
-/**
- * @typedef {Object} WidgetHandle
- * @property {() => Promise<void>} refresh Loads a new challenge.
- * @property {() => string | null} getToken The token of a correct answer while it is valid.
- * @property {() => void} destroy Removes the widget.
- */
+export interface WidgetHandle {
+  /** Loads a new challenge. */
+  refresh: () => Promise<void>;
+  /** The token of a correct answer while it is valid. */
+  getToken: () => string | null;
+  /** Removes the widget. */
+  destroy: () => void;
+}
 
-/** @type {WidgetLabels} */
-export const DEFAULT_LABELS = {
+export const DEFAULT_LABELS: WidgetLabels = {
   prompt: "Type the characters you see",
   verify: "Verify",
   refresh: "New challenge",
@@ -51,24 +51,20 @@ export const DEFAULT_LABELS = {
  * A correct answer puts the token into a hidden input named `inputName` (default
  * "wau-captcha-token"), so a form around the widget sends it with its other fields, and
  * calls onSuccess. When the token expires unused, the widget starts over and calls onExpired.
- *
- * @param {HTMLElement} container
- * @param {WidgetOptions} options
- * @returns {WidgetHandle}
  */
-export function renderWidget(container, options) {
+export function renderWidget(container: HTMLElement, options: WidgetOptions): WidgetHandle {
   const client = new WauCaptchaClient(options);
-  const labels = { ...DEFAULT_LABELS, ...options.labels };
+  const labels: WidgetLabels = { ...DEFAULT_LABELS, ...options.labels };
   const inputName = options.inputName ?? "wau-captcha-token";
 
   const root = element("div", "wau-captcha", "display:inline-grid;gap:8px;font:14px/1.4 system-ui,sans-serif;max-width:320px");
-  const image = /** @type {HTMLImageElement} */ (element("img", "wau-captcha__image", "display:block;border-radius:6px;background:#f3f3f3"));
+  const image = element("img", "wau-captcha__image", "display:block;border-radius:6px;background:#f3f3f3");
   image.alt = labels.imageAlt;
   const inputId = `wau-captcha-${Math.random().toString(36).slice(2, 10)}`;
-  const label = /** @type {HTMLLabelElement} */ (element("label", "wau-captcha__label"));
+  const label = element("label", "wau-captcha__label");
   label.htmlFor = inputId;
   label.textContent = labels.prompt;
-  const answer = /** @type {HTMLInputElement} */ (element("input", "wau-captcha__input", "padding:6px 8px;border:1px solid #c7c7c7;border-radius:6px;font:inherit"));
+  const answer = element("input", "wau-captcha__input", "padding:6px 8px;border:1px solid #c7c7c7;border-radius:6px;font:inherit");
   answer.id = inputId;
   answer.autocomplete = "off";
   answer.spellcheck = false;
@@ -80,28 +76,24 @@ export function renderWidget(container, options) {
   const status = element("p", "wau-captcha__status", "margin:0;min-height:1.4em;color:#555");
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
-  const token = /** @type {HTMLInputElement} */ (element("input"));
+  const token = element("input");
   token.type = "hidden";
   token.name = inputName;
   root.append(image, label, answer, buttons, status, token);
   container.append(root);
 
-  /** @type {import("./client.js").Challenge | null} */
-  let challenge = null;
-  /** @type {ReturnType<typeof setTimeout> | undefined} */
-  let expiryTimer;
+  let challenge: Challenge | null = null;
+  let expiryTimer: ReturnType<typeof setTimeout> | undefined;
   let busy = false;
 
-  /** @param {boolean} value */
-  function setBusy(value) {
+  function setBusy(value: boolean) {
     busy = value;
     verifyButton.disabled = value || Boolean(token.value);
     refreshButton.disabled = value;
     answer.disabled = value || Boolean(token.value);
   }
 
-  /** @param {unknown} error */
-  function fail(error) {
+  function fail(error: unknown) {
     const captchaError = error instanceof WauCaptchaError ? error : new WauCaptchaError("UNKNOWN", String(error));
     status.textContent = `${labels.failed} (${captchaError.code})`;
     options.onError?.(captchaError);
@@ -175,56 +167,4 @@ export function renderWidget(container, options) {
       root.remove();
     },
   };
-}
-
-/**
- * Renders a widget into every element carrying data-wau-captcha, reading its options from
- * data attributes: data-site-key, data-base-url and optionally data-challenge-type and
- * data-input-name. Elements already rendered are skipped.
- *
- * @param {ParentNode} [scope]
- * @returns {WidgetHandle[]}
- */
-export function autoRender(scope = document) {
-  /** @type {WidgetHandle[]} */
-  const handles = [];
-  scope.querySelectorAll("[data-wau-captcha]").forEach((node) => {
-    const host = /** @type {HTMLElement} */ (node);
-    if (host.dataset.wauCaptchaRendered) return;
-    host.dataset.wauCaptchaRendered = "true";
-    handles.push(
-      renderWidget(host, {
-        siteKey: host.dataset.siteKey ?? "",
-        baseUrl: host.dataset.baseUrl ?? "",
-        challengeType: /** @type {import("./client.js").ChallengeType | undefined} */ (host.dataset.challengeType),
-        inputName: host.dataset.inputName,
-      }),
-    );
-  });
-  return handles;
-}
-
-/**
- * @param {string} tag
- * @param {string} [className]
- * @param {string} [style]
- */
-function element(tag, className, style) {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (style) node.style.cssText = style;
-  return node;
-}
-
-/**
- * @param {string} text
- * @param {string} className
- */
-function button(text, className) {
-  const node = /** @type {HTMLButtonElement} */ (
-    element("button", className, "padding:6px 12px;border:1px solid #c7c7c7;border-radius:6px;background:#fff;font:inherit;cursor:pointer")
-  );
-  node.type = "button";
-  node.textContent = text;
-  return node;
 }

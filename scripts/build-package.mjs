@@ -1,5 +1,5 @@
 // Builds one package from its src/: ESM and CommonJS bundles, type declarations from the
-// JSDoc, and with --global <Name> a minified <script> build exposing window.<Name>.
+// package's tsconfig.json, and with --global <Name> a minified <script> build exposing window.<Name>.
 // Run it from the package directory: node ../../scripts/build-package.mjs [--global Name] [--platform node]
 import { execFileSync } from "node:child_process";
 import { existsSync, rmSync } from "node:fs";
@@ -16,13 +16,13 @@ const platform = option("--platform") ?? "neutral";
 
 rmSync("dist", { recursive: true, force: true });
 
-const shared = { entryPoints: ["src/index.js"], bundle: true, target: "es2020", platform, logLevel: "warning" };
+const shared = { entryPoints: ["src/index.ts"], bundle: true, target: "es2020", platform, logLevel: "warning" };
 await build({ ...shared, format: "esm", outfile: "dist/index.js" });
 await build({ ...shared, format: "cjs", outfile: "dist/index.cjs" });
 
-if (globalName && existsSync("src/global.js")) {
+if (globalName && existsSync("src/global.ts")) {
   await build({
-    entryPoints: ["src/global.js"],
+    entryPoints: ["src/global.ts"],
     bundle: true,
     target: "es2020",
     platform: "browser",
@@ -36,16 +36,4 @@ if (globalName && existsSync("src/global.js")) {
 }
 
 const tsc = createRequire(import.meta.url).resolve("typescript/bin/tsc");
-execFileSync(process.execPath, [
-  tsc,
-  "src/index.js",
-  "--allowJs",
-  "--declaration",
-  "--emitDeclarationOnly",
-  "--target", "ES2020",
-  "--module", "ES2020",
-  "--moduleResolution", "bundler",
-  "--lib", "ES2020,DOM",
-  "--skipLibCheck",
-  "--outDir", "dist",
-], { stdio: "inherit" });
+execFileSync(process.execPath, [tsc, "-p", "tsconfig.json"], { stdio: "inherit" });
