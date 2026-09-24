@@ -1,0 +1,41 @@
+{
+  "name": "@wau-captcha/server",
+  "version": "1.0.0",
+  "description": "Node.js SDK for WAU Captcha: redeem the tokens your frontend obtained, with your secret key.",
+  "license": "MIT",
+  "author": "WAU Captcha",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "node ../../scripts/build-package.mjs --platform node",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "captcha",
+    "wau-captcha",
+    "bot-protection",
+    "siteverify"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

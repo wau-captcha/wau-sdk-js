@@ -1,0 +1,25 @@
+{
+  "name": "wau-sdk-js",
+  "private": true,
+  "description": "JavaScript SDKs for WAU Captcha: @wau-captcha/client for the browser and @wau-captcha/server for Node.js.",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "packages/client",
+    "packages/server"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pack:dry": "npm pack --dry-run --workspaces",
+    "publish:dry": "npm publish --dry-run --access public --workspaces",
+    "release": "npm run build && npm publish --access public --workspaces"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
