@@ -4,7 +4,7 @@ import { normalizeBaseUrl, requestJson } from "./http.js";
 export interface WauCaptchaClientOptions {
   /** Public site key of the API key, "pk_…". Safe to ship to browsers. */
   siteKey: string;
-  /** Address of the WAU Captcha gateway, e.g. https://captcha.example.com. */
+  /** Address of the WAU Captcha API, e.g. https://captcha.example.com. */
   baseUrl: string;
   /** Type asked for when newChallenge names none. Default ChallengeType.IMAGE_DISTORT. */
   challengeType?: ChallengeType | undefined;

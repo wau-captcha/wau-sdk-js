@@ -12,7 +12,8 @@ export type ChallengeType = (typeof ChallengeType)[keyof typeof ChallengeType];
 
 /**
  * The codes a WauCaptchaError can carry in the browser: the reasons the challenge service
- * and the gateway send, then the ones the SDK raises itself when no usable reply arrived.
+ * and the entry point in front of it send, then the ones the SDK raises itself when no usable
+ * reply arrived.
  */
 export const ErrorCode = {
   SITE_KEY_INVALID: "SITE_KEY_INVALID",

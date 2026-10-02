@@ -11,7 +11,8 @@ export type ChallengeType = (typeof ChallengeType)[keyof typeof ChallengeType];
 
 /**
  * The codes a WauCaptchaError can carry on the server: the reasons the verify service and the
- * gateway send, then the ones the SDK raises itself when no usable reply arrived.
+ * entry point in front of it send, then the ones the SDK raises itself when no usable reply
+ * arrived.
  */
 export const ErrorCode = {
   SECRET_KEY_INVALID: "SECRET_KEY_INVALID",

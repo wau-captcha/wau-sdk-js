@@ -4,7 +4,7 @@ import { WauCaptchaError } from "./errors.js";
 export interface WauCaptchaServerOptions {
   /** Secret key of the API key, "sk_…". Keep it on the server. */
   secretKey: string;
-  /** Address of the WAU Captcha gateway, e.g. https://captcha.example.com. */
+  /** Address of the WAU Captcha API, e.g. https://captcha.example.com. */
   baseUrl: string;
   /** How long to wait for a reply. Default 5 000. */
   timeoutMs?: number | undefined;

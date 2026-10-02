@@ -56,7 +56,7 @@ font:inherit;font-weight:500;line-height:1.25;cursor:pointer;outline:none;transi
 border:1px solid var(--_border);border-radius:8px;background:var(--_background);color:var(--_foreground);box-shadow:0 16px 48px rgb(0 0 0/.24);overflow:auto}
 .wau-captcha__dialog::backdrop{background:rgb(0 0 0/.5)}
 .wau-captcha__dialog-body{display:grid;gap:12px;padding:16px}
-.wau-captcha__dialog-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 -8px 0 0;font-size:16px;font-weight:600}
+.wau-captcha__dialog-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 -8px 0 0;color:var(--_foreground);font-size:16px;font-weight:600}
 .wau-captcha__dialog .wau-captcha__panel{padding:0;border:0;background:none}
 @media (pointer:coarse){.wau-captcha__input{font-size:16px}}
 `;
