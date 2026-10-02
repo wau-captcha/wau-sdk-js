@@ -20,14 +20,26 @@ export interface Challenge {
   type: ChallengeType;
   /** A data: URL, ready for an <img> src. */
   imageUrl: string;
-  /** "image/png" or "image/gif". */
+  /** "image/png", "image/gif" or, for slide_puzzle, "image/jpeg". */
   mimeType: string;
   /** Size to display the image at, in CSS pixels. */
   width: number;
   height: number;
   /** After this the challenge can no longer be answered. */
   expiresAt: Date;
+  /**
+   * slide_puzzle only: the piece to drag over the image, a PNG data: URL. It starts with its left
+   * edge at x = 0 and moves horizontally; y, width and height are in CSS pixels of the image.
+   */
+  piece?: { imageUrl: string; y: number; width: number; height: number };
 }
+
+/**
+ * A slide_puzzle drag: where the left edge of the piece ended, and the points of the drag, each
+ * [ms since pointerdown, left edge of the piece, vertical offset of the pointer from where it
+ * went down], in CSS pixels of the image. trackSlide records it.
+ */
+export type SlideDrag = { x: number; trail: Array<[number, number, number]> };
 
 /** A correct answer carries the one-time token your backend redeems with @wau-captcha/server. */
 export type VerifyResult = { success: true; token: string; expiresAt: Date } | { success: false };
@@ -43,6 +55,11 @@ interface ChallengeReply {
   height: number;
   /** Seconds until the challenge can no longer be answered. */
   expires_in: number;
+  /** slide_puzzle only: the piece, a base64-encoded PNG, and where it sits on the image. */
+  piece_image?: string;
+  piece_y?: number;
+  piece_width?: number;
+  piece_height?: number;
 }
 
 /** POST /challenge/verify, as the service sends it: fields left out are false or empty. */
@@ -93,6 +110,16 @@ export class WauCaptchaClient {
       width: reply.width,
       height: reply.height,
       expiresAt: new Date(Date.now() + reply.expires_in * 1000),
+      ...(reply.piece_image
+        ? {
+            piece: {
+              imageUrl: `data:image/png;base64,${reply.piece_image}`,
+              y: reply.piece_y ?? 0,
+              width: reply.piece_width ?? 0,
+              height: reply.piece_height ?? 0,
+            },
+          }
+        : {}),
     };
   }
 
@@ -115,4 +142,15 @@ export class WauCaptchaClient {
     if (!reply.success || !reply.token) return { success: false };
     return { success: true, token: reply.token, expiresAt: new Date(Date.now() + (reply.expires_in ?? 0) * 1000) };
   }
+
+  /** Submits a slide_puzzle drag: verify with the drag written as the JSON the service reads. */
+  verifySlide(challengeId: string, drag: SlideDrag, options: { signal?: AbortSignal | undefined } = {}): Promise<VerifyResult> {
+    const answer = JSON.stringify({ x: round1(drag.x), t: drag.trail.map(([t, x, y]) => [round1(t), round1(x), round1(y)]) });
+    return this.verify(challengeId, answer, options);
+  }
+}
+
+/** Tenths of a pixel or millisecond are as precise as the check needs, and keep the answer short. */
+function round1(value: number): number {
+  return Math.round(value * 10) / 10;
 }

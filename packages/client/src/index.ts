@@ -1,8 +1,12 @@
 export { autoRender } from "./auto-render.js";
 export { WauCaptchaClient } from "./client.js";
-export type { Challenge, VerifyResult, WauCaptchaClientOptions } from "./client.js";
+export type { Challenge, SlideDrag, VerifyResult, WauCaptchaClientOptions } from "./client.js";
 export { ChallengeType, ErrorCode } from "./constants.js";
 export { WauCaptchaError } from "./errors.js";
+export { DEFAULT_LABELS } from "./labels.js";
+export type { WidgetLabels } from "./labels.js";
+export { trackSlide } from "./slide-tracker.js";
+export type { SlideTrackerOptions } from "./slide-tracker.js";
 export { WIDGET_STYLES } from "./styles.js";
-export { DEFAULT_LABELS, renderWidget } from "./widget.js";
-export type { WidgetHandle, WidgetLabels, WidgetOptions } from "./widget.js";
+export { renderWidget } from "./widget.js";
+export type { WidgetHandle, WidgetOptions } from "./widget.js";

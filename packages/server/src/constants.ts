@@ -1,10 +1,12 @@
 /**
  * The challenge types, by their API names. IMAGE_DISTORT is distorted text in a PNG;
- * MOTION_NOISE hides the text in a short animated GIF of moving dots.
+ * MOTION_NOISE hides the text in a short animated GIF of moving dots; SLIDE_PUZZLE asks to drag
+ * a puzzle piece into its hole and checks that the drag moved like a hand.
  */
 export const ChallengeType = {
   IMAGE_DISTORT: "image_distort",
   MOTION_NOISE: "motion_noise",
+  SLIDE_PUZZLE: "slide_puzzle",
 } as const;
 
 export type ChallengeType = (typeof ChallengeType)[keyof typeof ChallengeType];

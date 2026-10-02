@@ -1,4 +1,12 @@
-import { type Challenge, ErrorCode, WauCaptchaClient, type WauCaptchaClientOptions, WauCaptchaError } from "@wau-captcha/client";
+import {
+  type Challenge,
+  ErrorCode,
+  type SlideDrag,
+  type VerifyResult,
+  WauCaptchaClient,
+  type WauCaptchaClientOptions,
+  WauCaptchaError,
+} from "@wau-captcha/client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 /** What a captcha is doing. Only READY takes an answer. */
@@ -43,6 +51,8 @@ export type Captcha = CaptchaState & {
   /** Loads a new challenge, keeping `notice` on screen. */
   load: (notice?: CaptchaNotice | null) => Promise<void>;
   verify: (challengeId: string, answer: string) => Promise<void>;
+  /** Submits the drag of a slide_puzzle challenge, like verify. */
+  verifySlide: (challengeId: string, drag: SlideDrag) => Promise<void>;
 };
 
 const INITIAL_STATE: CaptchaState = {
@@ -95,12 +105,13 @@ export function useCaptcha({ siteKey, baseUrl, challengeType, timeoutMs, eager, 
     [client, startRequest, fail],
   );
 
-  const verify = useCallback(
-    async (challengeId: string, answer: string) => {
+  /** Sends the answer `send` makes: the text typed, or the drag of the slider. */
+  const submit = useCallback(
+    async (send: (signal: AbortSignal) => Promise<VerifyResult>) => {
       const signal = startRequest();
       setState((current) => ({ ...current, status: CaptchaStatus.CHECKING }));
       try {
-        const result = await client.verify(challengeId, answer, { signal });
+        const result = await send(signal);
         if (signal.aborted) return;
         // A challenge can be answered once, so a wrong answer needs a new one.
         if (!result.success) return void load(CaptchaNotice.WRONG_ANSWER);
@@ -113,7 +124,17 @@ export function useCaptcha({ siteKey, baseUrl, challengeType, timeoutMs, eager, 
         fail(error);
       }
     },
-    [client, startRequest, load, fail],
+    [startRequest, load, fail],
+  );
+
+  const verify = useCallback(
+    (challengeId: string, answer: string) => submit((signal) => client.verify(challengeId, answer, { signal })),
+    [client, submit],
+  );
+
+  const verifySlide = useCallback(
+    (challengeId: string, drag: SlideDrag) => submit((signal) => client.verifySlide(challengeId, drag, { signal })),
+    [client, submit],
   );
 
   useEffect(() => {
@@ -131,5 +152,5 @@ export function useCaptcha({ siteKey, baseUrl, challengeType, timeoutMs, eager, 
     return () => clearTimeout(timer);
   }, [state.tokenExpiresAt, eager, load]);
 
-  return { ...state, load, verify };
+  return { ...state, load, verify, verifySlide };
 }
