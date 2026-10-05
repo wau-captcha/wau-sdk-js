@@ -1,3 +1,4 @@
+import { type BehaviorRecorder, recordBehavior } from "./behavior-recorder.js";
 import { type Challenge, type VerifyResult, WauCaptchaClient, type WauCaptchaClientOptions } from "./client.js";
 import { ChallengeType, ErrorCode } from "./constants.js";
 import { addStyles, createButton, createElement } from "./dom.js";
@@ -59,7 +60,9 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
   const tokenInput = createElement("input");
   tokenInput.type = "hidden";
   tokenInput.name = options.inputName ?? "wau-captcha-token";
-  const slider = createSlidePuzzle(labels, (drag) => void submit((current) => client.verifySlide(current.id, drag)));
+  const slider = createSlidePuzzle(labels, (drag) =>
+    void submit((current) => client.verifySlide(current.id, drag, { behavior: recorder?.snapshot() })),
+  );
   panel.append(image, slider.puzzle, field, slider.track, actions, statusLine);
   root.append(panel, tokenInput);
   container.append(root);
@@ -67,6 +70,8 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
   let challenge: Challenge | null = null;
   let expiryTimer: ReturnType<typeof setTimeout> | undefined;
   let busy = false;
+  // How the person behaves while the current challenge is on screen; the service checks it with the answer.
+  let recorder: BehaviorRecorder | undefined;
 
   /** Whether the slider shows instead of the text box: the type the challenge has, or before one arrived, the one asked for. */
   const sliding = () => (challenge ? challenge.piece !== undefined : client.challengeType === ChallengeType.SLIDE_PUZZLE);
@@ -101,6 +106,8 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
 
   async function refresh() {
     clearTimeout(expiryTimer);
+    recorder?.stop();
+    recorder = undefined;
     tokenInput.value = "";
     answerInput.value = "";
     setBusy(true);
@@ -115,6 +122,7 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
         image.height = challenge.height;
       }
       showStatus("");
+      recorder = recordBehavior({ root, input: challenge.piece ? null : answerInput });
     } catch (error) {
       challenge = null;
       fail(error);
@@ -161,7 +169,7 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
 
   function verify() {
     const answer = answerInput.value.trim();
-    if (answer) void submit((current) => client.verify(current.id, answer));
+    if (answer) void submit((current) => client.verify(current.id, answer, { behavior: recorder?.snapshot() }));
   }
 
   verifyButton.addEventListener("click", () => verify());
@@ -180,6 +188,7 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
     getToken: () => tokenInput.value || null,
     destroy() {
       clearTimeout(expiryTimer);
+      recorder?.stop();
       root.remove();
     },
   };

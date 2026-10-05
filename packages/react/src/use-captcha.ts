@@ -1,4 +1,5 @@
 import {
+  type Behavior,
   type Challenge,
   ErrorCode,
   type SlideDrag,
@@ -50,9 +51,10 @@ export type CaptchaState = {
 export type Captcha = CaptchaState & {
   /** Loads a new challenge, keeping `notice` on screen. */
   load: (notice?: CaptchaNotice | null) => Promise<void>;
-  verify: (challengeId: string, answer: string) => Promise<void>;
+  /** Submits an answer, with how the person behaved while the challenge was on screen. */
+  verify: (challengeId: string, answer: string, behavior?: Behavior) => Promise<void>;
   /** Submits the drag of a slide_puzzle challenge, like verify. */
-  verifySlide: (challengeId: string, drag: SlideDrag) => Promise<void>;
+  verifySlide: (challengeId: string, drag: SlideDrag, behavior?: Behavior) => Promise<void>;
 };
 
 const INITIAL_STATE: CaptchaState = {
@@ -128,12 +130,13 @@ export function useCaptcha({ siteKey, baseUrl, challengeType, timeoutMs, eager, 
   );
 
   const verify = useCallback(
-    (challengeId: string, answer: string) => submit((signal) => client.verify(challengeId, answer, { signal })),
+    (challengeId: string, answer: string, behavior?: Behavior) => submit((signal) => client.verify(challengeId, answer, { signal, behavior })),
     [client, submit],
   );
 
   const verifySlide = useCallback(
-    (challengeId: string, drag: SlideDrag) => submit((signal) => client.verifySlide(challengeId, drag, { signal })),
+    (challengeId: string, drag: SlideDrag, behavior?: Behavior) =>
+      submit((signal) => client.verifySlide(challengeId, drag, { signal, behavior })),
     [client, submit],
   );
 

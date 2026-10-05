@@ -1,4 +1,4 @@
-import { ChallengeType, type SlideDrag } from "@wau-captcha/client";
+import { type BehaviorRecorder, ChallengeType, recordBehavior, type SlideDrag } from "@wau-captcha/client";
 import { type KeyboardEvent, useEffect, useRef } from "react";
 import { CheckIcon, RefreshIcon, SpinnerIcon } from "./icons.js";
 import type { WauCaptchaLabels } from "./labels.js";
@@ -24,7 +24,10 @@ export type ChallengePanelProps = {
  */
 export function ChallengePanel({ captcha, labels, challengeType }: ChallengePanelProps) {
   const { status, notice, challenge, error } = captcha;
+  const panelRef = useRef<HTMLDivElement>(null);
   const answerInputRef = useRef<HTMLInputElement>(null);
+  // How the person behaves while this challenge is on screen; the service checks it with the answer.
+  const recorderRef = useRef<BehaviorRecorder | null>(null);
   // Set when an answer is sent, so the answer box gets the focus back if another try is needed.
   const refocusPendingRef = useRef(false);
   const answerable = status === CaptchaStatus.READY && challenge !== null;
@@ -40,6 +43,16 @@ export function ChallengePanel({ captcha, labels, challengeType }: ChallengePane
   }, [challenge]);
 
   useEffect(() => {
+    if (!challenge || !panelRef.current) return;
+    const recorder = recordBehavior({ root: panelRef.current, input: challenge.piece ? null : answerInputRef.current });
+    recorderRef.current = recorder;
+    return () => {
+      recorder.stop();
+      if (recorderRef.current === recorder) recorderRef.current = null;
+    };
+  }, [challenge]);
+
+  useEffect(() => {
     if (!refocusPendingRef.current || loading || checking) return;
     refocusPendingRef.current = false;
     if (answerable) answerInputRef.current?.focus();
@@ -49,11 +62,11 @@ export function ChallengePanel({ captcha, labels, challengeType }: ChallengePane
     const answer = answerInputRef.current?.value.trim();
     if (!answerable || !answer) return;
     refocusPendingRef.current = true;
-    void captcha.verify(challenge.id, answer);
+    void captcha.verify(challenge.id, answer, recorderRef.current?.snapshot());
   }
 
   function submitDrag(drag: SlideDrag) {
-    if (answerable) void captcha.verifySlide(challenge.id, drag);
+    if (answerable) void captcha.verifySlide(challenge.id, drag, recorderRef.current?.snapshot());
   }
 
   function submitOnEnter(event: KeyboardEvent<HTMLInputElement>) {
@@ -70,7 +83,7 @@ export function ChallengePanel({ captcha, labels, challengeType }: ChallengePane
   const message = verified ? labels.verified : failed ? `${labels.failed} (${error?.code})` : notice && notices[notice];
 
   return (
-    <div className="wau-captcha__panel">
+    <div ref={panelRef} className="wau-captcha__panel">
       {!verified && (
         <>
           {sliding ? (

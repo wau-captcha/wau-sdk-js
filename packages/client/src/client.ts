@@ -41,6 +41,34 @@ export interface Challenge {
  */
 export type SlideDrag = { x: number; trail: Array<[number, number, number]> };
 
+/**
+ * How the person behaved while a challenge was on screen, as recordBehavior records it and the
+ * service reads it: times in ms since the challenge was shown, x and y in CSS px from the top-left
+ * corner of the widget. It never holds the keys pressed or anything from the page.
+ */
+export type Behavior = {
+  version: 1;
+  elapsed_ms: number;
+  /** Pointer moves (one per 16 ms at most) and the places it went down, the latest 200. */
+  pointer: Array<{ t: number; x: number; y: number }>;
+  /** "mouse", "touch", "pen", or "" when no pointer was used. */
+  pointer_type: string;
+  /** Milliseconds between key presses in the answer box, the latest 64. */
+  key_intervals_ms: number[];
+  input_events: number;
+  paste_events: number;
+  /** Events a script dispatched on the widget. */
+  untrusted_events: number;
+  webdriver: boolean;
+  hidden_ms: number;
+};
+
+export type VerifyOptions = {
+  signal?: AbortSignal | undefined;
+  /** What recordBehavior recorded for this challenge. Without it only the answer is checked. */
+  behavior?: Behavior | undefined;
+};
+
 /** A correct answer carries the one-time token your backend redeems with @wau-captcha/server. */
 export type VerifyResult = { success: true; token: string; expiresAt: Date } | { success: false };
 
@@ -125,16 +153,18 @@ export class WauCaptchaClient {
 
   /**
    * Submits an answer. The challenge is used up either way: after a wrong answer, fetch a
-   * new one. Answers are not case-sensitive.
+   * new one. Answers are not case-sensitive. With `behavior` the service also checks how the
+   * person behaved, and refuses an answer a script clearly gave.
    */
-  async verify(challengeId: string, answer: string, options: { signal?: AbortSignal | undefined } = {}): Promise<VerifyResult> {
+  async verify(challengeId: string, answer: string, options: VerifyOptions = {}): Promise<VerifyResult> {
+    const body = options.behavior ? { challenge_id: challengeId, answer, behavior: options.behavior } : { challenge_id: challengeId, answer };
     const reply = await requestJson<VerifyReply>({
       fetch: this.fetch,
       url: `${this.baseUrl}/challenge/verify`,
       init: {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ challenge_id: challengeId, answer }),
+        body: JSON.stringify(body),
       },
       timeoutMs: this.timeoutMs,
       signal: options.signal,
@@ -144,7 +174,7 @@ export class WauCaptchaClient {
   }
 
   /** Submits a slide_puzzle drag: verify with the drag written as the JSON the service reads. */
-  verifySlide(challengeId: string, drag: SlideDrag, options: { signal?: AbortSignal | undefined } = {}): Promise<VerifyResult> {
+  verifySlide(challengeId: string, drag: SlideDrag, options: VerifyOptions = {}): Promise<VerifyResult> {
     const answer = JSON.stringify({ x: round1(drag.x), t: drag.trail.map(([t, x, y]) => [round1(t), round1(x), round1(y)]) });
     return this.verify(challengeId, answer, options);
   }

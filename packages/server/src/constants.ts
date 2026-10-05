@@ -12,6 +12,20 @@ export const ChallengeType = {
 export type ChallengeType = (typeof ChallengeType)[keyof typeof ChallengeType];
 
 /**
+ * What the behaviour check concluded about the answer behind a token. HUMAN: it behaved like a
+ * person. SUSPICIOUS: the answer was right but the session looked scripted; refuse it for
+ * sensitive actions if you like. NOT_MEASURED: the client sent no behaviour (an older SDK or a
+ * plain REST call), so only the answer was checked. Answers judged automated never get a token.
+ */
+export const BehaviorVerdict = {
+  HUMAN: "human",
+  SUSPICIOUS: "suspicious",
+  NOT_MEASURED: "not_measured",
+} as const;
+
+export type BehaviorVerdict = (typeof BehaviorVerdict)[keyof typeof BehaviorVerdict];
+
+/**
  * The codes a WauCaptchaError can carry on the server: the reasons the verify service and the
  * gateway send, then the ones the SDK raises itself when no usable reply arrived.
  */

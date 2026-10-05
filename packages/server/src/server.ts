@@ -1,4 +1,4 @@
-import { type ChallengeType, ErrorCode } from "./constants.js";
+import { BehaviorVerdict, type ChallengeType, ErrorCode } from "./constants.js";
 import { WauCaptchaError } from "./errors.js";
 
 export interface WauCaptchaServerOptions {
@@ -16,7 +16,18 @@ export interface WauCaptchaServerOptions {
  * A redeemed token proves a captcha was solved for this key. `success` is false when the
  * token is unknown, expired, already used, or was issued for another key.
  */
-export type VerifyTokenResult = { success: true; challengeType: ChallengeType; solvedAt: Date } | { success: false };
+export type VerifyTokenResult =
+  | { success: true; challengeType: ChallengeType; solvedAt: Date; behavior: BehaviorResult }
+  | { success: false };
+
+/** How the person who solved the challenge behaved, as the service judged it. */
+export type BehaviorResult = {
+  verdict: BehaviorVerdict;
+  /** From 0 (scripted) to 1 (human-like); null when not measured. */
+  score: number | null;
+  /** Short codes of what lowered the score, e.g. "webdriver". */
+  reasons: string[];
+};
 
 /** POST /siteverify, as the service sends it: `success` is left out when false. */
 interface SiteVerifyReply {
@@ -25,6 +36,8 @@ interface SiteVerifyReply {
   challenge_type: ChallengeType;
   /** When the challenge was solved, as an RFC 3339 timestamp. Set when success is true. */
   challenge_ts: string;
+  /** Left out by services that do not check behaviour yet. */
+  behavior?: { verdict?: string; score?: number | null; reasons?: string[] | null } | null;
 }
 
 /** The error body the service sends with every reply that is not 2xx. */
@@ -90,7 +103,7 @@ export class WauCaptchaServer {
     if (!response.ok) throw errorFromReply(body, response);
     const reply = body as SiteVerifyReply;
     if (!reply.success) return { success: false };
-    return { success: true, challengeType: reply.challenge_type, solvedAt: new Date(reply.challenge_ts) };
+    return { success: true, challengeType: reply.challenge_type, solvedAt: new Date(reply.challenge_ts), behavior: toBehavior(reply.behavior) };
   }
 }
 
@@ -107,4 +120,11 @@ function errorFromReply(body: unknown, response: Response): WauCaptchaError {
 
 function describeError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/** A service that does not check behaviour yet, or a verdict this SDK does not know, reads as not measured. */
+function toBehavior(raw: SiteVerifyReply["behavior"]): BehaviorResult {
+  const verdicts: readonly string[] = Object.values(BehaviorVerdict);
+  if (!raw?.verdict || !verdicts.includes(raw.verdict)) return { verdict: BehaviorVerdict.NOT_MEASURED, score: null, reasons: [] };
+  return { verdict: raw.verdict as BehaviorVerdict, score: typeof raw.score === "number" ? raw.score : null, reasons: raw.reasons ?? [] };
 }

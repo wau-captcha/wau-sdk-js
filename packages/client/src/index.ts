@@ -1,6 +1,8 @@
 export { autoRender } from "./auto-render.js";
+export { recordBehavior } from "./behavior-recorder.js";
+export type { BehaviorRecorder, BehaviorRecorderOptions } from "./behavior-recorder.js";
 export { WauCaptchaClient } from "./client.js";
-export type { Challenge, SlideDrag, VerifyResult, WauCaptchaClientOptions } from "./client.js";
+export type { Behavior, Challenge, SlideDrag, VerifyOptions, VerifyResult, WauCaptchaClientOptions } from "./client.js";
 export { ChallengeType, ErrorCode } from "./constants.js";
 export { WauCaptchaError } from "./errors.js";
 export { DEFAULT_LABELS } from "./labels.js";
