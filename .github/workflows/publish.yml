@@ -1,0 +1,45 @@
+name: publish
+
+# By hand only: Actions → publish → Run workflow, once the versions in packages/*/package.json are
+# bumped and CHANGELOG.md says what changed. npm Trusted Publishing authenticates the run through
+# OIDC, so there is no npm token anywhere; each package must list this repository and this
+# workflow as its trusted publisher on npmjs.com.
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      # Trusted Publishing needs npm 11.5.1 or later.
+      - run: npm install -g npm@latest
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test
+
+      # Client first: react depends on it. A version already on npm is skipped, so the workflow can
+      # run again after a partial failure.
+      - name: Publish the versions not on npm yet
+        run: |
+          for dir in packages/client packages/server packages/react; do
+            name=$(node -p "require('./$dir/package.json').name")
+            version=$(node -p "require('./$dir/package.json').version")
+            if [ -n "$(npm view "$name@$version" version 2>/dev/null)" ]; then
+              echo "$name@$version is already on npm"
+            else
+              npm publish --workspace "$dir" --access public --provenance
+            fi
+          done

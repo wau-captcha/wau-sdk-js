@@ -1,4 +1,4 @@
-import type { Behavior } from "./client.js";
+import type { Behavior } from "./types.js";
 
 // What the service reads: a move every 16 ms at most, the latest 200 samples, 64 key intervals.
 // The latest samples, not an even thinning of a long session, keep the strokes of the pointer
@@ -108,6 +108,7 @@ export function recordBehavior({ root, input }: BehaviorRecorderOptions): Behavi
         untrusted_events: untrusted,
         webdriver: navigator.webdriver === true,
         hidden_ms: Math.round(hiddenMs + (hiddenSince === null ? 0 : now - hiddenSince)),
+        ...browserHints(),
       };
     },
     stop() {
@@ -119,6 +120,20 @@ export function recordBehavior({ root, input }: BehaviorRecorderOptions): Behavi
       input?.removeEventListener("paste", pasted);
       document.removeEventListener("visibilitychange", visibility);
     },
+  };
+}
+
+/**
+ * What the browser says about itself (see Behavior). Android WebView sends a Chrome user agent but
+ * has no window.chrome, so it is not taken for a headless Chrome.
+ */
+export function browserHints(): Pick<Behavior, "headless_ua" | "no_languages" | "chrome_without_window_chrome"> {
+  const userAgent = navigator.userAgent ?? "";
+  const chrome = /\bChrome\/\d/.test(userAgent) && !/; wv\)/.test(userAgent);
+  return {
+    headless_ua: userAgent.includes("HeadlessChrome"),
+    no_languages: !navigator.languages || navigator.languages.length === 0,
+    chrome_without_window_chrome: chrome && !("chrome" in globalThis),
   };
 }
 

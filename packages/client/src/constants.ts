@@ -19,14 +19,23 @@ export type ChallengeType = (typeof ChallengeType)[keyof typeof ChallengeType];
  */
 export const ErrorCode = {
   SITE_KEY_INVALID: "SITE_KEY_INVALID",
+  /** The address of the visitor is not in the IP list of the key. */
   ORIGIN_NOT_ALLOWED: "ORIGIN_NOT_ALLOWED",
+  /** The website is not in the allowed domains of the key. */
+  DOMAIN_NOT_ALLOWED: "DOMAIN_NOT_ALLOWED",
   CHALLENGE_TYPE_UNSUPPORTED: "CHALLENGE_TYPE_UNSUPPORTED",
   CHALLENGE_TYPE_NOT_ALLOWED: "CHALLENGE_TYPE_NOT_ALLOWED",
   CHALLENGE_NOT_FOUND: "CHALLENGE_NOT_FOUND",
+  CHALLENGE_ID_INVALID: "CHALLENGE_ID_INVALID",
+  /** The key requires behaviour data and the answer came without any: send recordBehavior's snapshot. */
+  BEHAVIOR_REQUIRED: "BEHAVIOR_REQUIRED",
   API_KEY_SUSPENDED: "API_KEY_SUSPENDED",
   ACCOUNT_BANNED: "ACCOUNT_BANNED",
   DAILY_QUOTA_EXCEEDED: "DAILY_QUOTA_EXCEEDED",
   RATE_LIMITED: "RATE_LIMITED",
+  PAYLOAD_TOO_LARGE: "PAYLOAD_TOO_LARGE",
+  /** The service failed; the details stay in its log. */
+  INTERNAL: "INTERNAL",
   ROUTE_NOT_FOUND: "ROUTE_NOT_FOUND",
   UPSTREAM_UNAVAILABLE: "UPSTREAM_UNAVAILABLE",
   NETWORK_ERROR: "NETWORK_ERROR",

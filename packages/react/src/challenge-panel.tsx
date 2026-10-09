@@ -1,4 +1,4 @@
-import { type BehaviorRecorder, ChallengeType, recordBehavior, type SlideDrag } from "@wau-captcha/client";
+import { type BehaviorRecorder, ChallengeType, ErrorCode, recordBehavior, type SlideDrag, type WauCaptchaError } from "@wau-captcha/client";
 import { type KeyboardEvent, useEffect, useRef } from "react";
 import { CheckIcon, RefreshIcon, SpinnerIcon } from "./icons.js";
 import type { WauCaptchaLabels } from "./labels.js";
@@ -80,7 +80,7 @@ export function ChallengePanel({ captcha, labels, challengeType }: ChallengePane
     [CaptchaNotice.WRONG_ANSWER]: labels.wrong,
     [CaptchaNotice.EXPIRED]: labels.expired,
   };
-  const message = verified ? labels.verified : failed ? `${labels.failed} (${error?.code})` : notice && notices[notice];
+  const message = verified ? labels.verified : failed ? failure(labels, error) : notice && notices[notice];
 
   return (
     <div ref={panelRef} className="wau-captcha__panel">
@@ -159,4 +159,10 @@ export function ChallengePanel({ captcha, labels, challengeType }: ChallengePane
       </p>
     </div>
   );
+}
+
+/** What the status line says once loading or checking failed. */
+function failure(labels: WauCaptchaLabels, error: WauCaptchaError | null): string {
+  if (error?.code === ErrorCode.RATE_LIMITED) return labels.rateLimited.replace("{seconds}", String(error.retryAfter ?? 60));
+  return `${labels.failed} (${error?.code})`;
 }

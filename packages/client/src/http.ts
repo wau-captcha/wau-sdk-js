@@ -49,14 +49,20 @@ export async function requestJson<T>({ fetch, url, init, timeoutMs, signal }: Re
   return body as T;
 }
 
-/** Turns the service's error body into a WauCaptchaError, filling in what it left out. */
+/**
+ * Turns the service's error body into a WauCaptchaError, filling in what it left out. The seconds
+ * a RATE_LIMITED reply asks to wait come in metadata.retry_after, or else in Retry-After.
+ */
 function errorFromReply(body: unknown, response: Response): WauCaptchaError {
   const reply: ErrorReply = body && typeof body === "object" ? body : {};
+  const metadata = reply.metadata && typeof reply.metadata === "object" ? { ...(reply.metadata as Record<string, string>) } : {};
+  const retryAfter = response.headers.get("Retry-After");
+  if (!metadata.retry_after && retryAfter) metadata.retry_after = retryAfter;
   return new WauCaptchaError(
     typeof reply.reason === "string" && reply.reason ? reply.reason : ErrorCode.UNKNOWN,
     typeof reply.message === "string" && reply.message ? reply.message : response.statusText,
     response.status,
-    reply.metadata && typeof reply.metadata === "object" ? (reply.metadata as Record<string, string>) : {},
+    metadata,
   );
 }
 
@@ -64,8 +70,29 @@ function describeError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-/** The service address without trailing slashes, or a TypeError when it is missing. */
+/** Hosts that may be called over plain http, for local development. */
+const LOCAL_HOSTS = ["localhost", "127.0.0.1", "[::1]"];
+
+/**
+ * The service address without trailing slashes. It must be https, so tokens and secret keys are
+ * never sent in clear text; http is only allowed for localhost, 127.0.0.1 and [::1]. Anything else
+ * is a TypeError. @wau-captcha/server keeps a copy of this rule.
+ */
 export function normalizeBaseUrl(baseUrl: string | undefined): string {
-  if (typeof baseUrl !== "string" || !baseUrl.trim()) throw new TypeError("baseUrl is required, e.g. https://captcha.example.com");
-  return baseUrl.trim().replace(/\/+$/, "");
+  if (typeof baseUrl !== "string" || !baseUrl.trim()) throw new TypeError("baseUrl is required, e.g. https://api.waucaptcha.com");
+  const address = baseUrl.trim().replace(/\/+$/, "");
+  let url: URL;
+  try {
+    url = new URL(address);
+  } catch {
+    throw new TypeError(`baseUrl is not a URL: ${address}`);
+  }
+  const local = url.protocol === "http:" && LOCAL_HOSTS.includes(url.hostname);
+  if (url.protocol !== "https:" && !local) {
+    throw new TypeError(
+      "baseUrl must start with https:// so the token and secret key are never sent in clear text " +
+        "(http:// only for localhost, 127.0.0.1 or [::1])",
+    );
+  }
+  return address;
 }

@@ -1,10 +1,11 @@
+import { normalizeBaseUrl } from "./base-url.js";
 import { BehaviorVerdict, type ChallengeType, ErrorCode } from "./constants.js";
 import { WauCaptchaError } from "./errors.js";
 
 export interface WauCaptchaServerOptions {
   /** Secret key of the API key, "sk_…". Keep it on the server. */
   secretKey: string;
-  /** Address of the WAU Captcha gateway, e.g. https://captcha.example.com. */
+  /** Address of the WAU Captcha API, e.g. https://api.waucaptcha.com. https only, but for localhost. */
   baseUrl: string;
   /** How long to wait for a reply. Default 5 000. */
   timeoutMs?: number | undefined;
@@ -17,7 +18,19 @@ export interface WauCaptchaServerOptions {
  * token is unknown, expired, already used, or was issued for another key.
  */
 export type VerifyTokenResult =
-  | { success: true; challengeType: ChallengeType; solvedAt: Date; behavior: BehaviorResult }
+  | {
+      success: true;
+      challengeType: ChallengeType;
+      solvedAt: Date;
+      behavior: BehaviorResult;
+      /**
+       * Host name of the website the challenge was solved on, from the Origin of the browser's
+       * requests: compare it with your own domain. A script outside a browser can forge it, so it
+       * stops other websites from using your key, not bots. Empty when the challenge was asked for
+       * without an origin, or from a service before site binding.
+       */
+      hostname: string;
+    }
   | { success: false };
 
 /** How the person who solved the challenge behaved, as the service judged it. */
@@ -38,6 +51,8 @@ interface SiteVerifyReply {
   challenge_ts: string;
   /** Left out by services that do not check behaviour yet. */
   behavior?: { verdict?: string; score?: number | null; reasons?: string[] | null } | null;
+  /** Left out by services before site binding. */
+  hostname?: string;
 }
 
 /** The error body the service sends with every reply that is not 2xx. */
@@ -58,11 +73,8 @@ export class WauCaptchaServer {
     if (!options || typeof options.secretKey !== "string" || !options.secretKey.trim()) {
       throw new TypeError("secretKey is required: the secret key of your API key, sk_…");
     }
-    if (typeof options.baseUrl !== "string" || !options.baseUrl.trim()) {
-      throw new TypeError("baseUrl is required, e.g. https://captcha.example.com");
-    }
     this.secretKey = options.secretKey.trim();
-    this.baseUrl = options.baseUrl.trim().replace(/\/+$/, "");
+    this.baseUrl = normalizeBaseUrl(options.baseUrl);
     this.timeoutMs = options.timeoutMs ?? 5_000;
     this.fetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   }
@@ -79,12 +91,13 @@ export class WauCaptchaServer {
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
-    const url = `${this.baseUrl}/siteverify?${new URLSearchParams({ token: token.trim() })}`;
     let response: Response;
     try {
-      response = await this.fetch(url, {
+      // The token travels in the body, never in the URL, so it stays out of access logs.
+      response = await this.fetch(`${this.baseUrl}/siteverify`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${this.secretKey}`, Accept: "application/json" },
+        headers: { Authorization: `Bearer ${this.secretKey}`, Accept: "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify({ token: token.trim() }),
         signal: controller.signal,
       });
     } catch (error) {
@@ -103,18 +116,30 @@ export class WauCaptchaServer {
     if (!response.ok) throw errorFromReply(body, response);
     const reply = body as SiteVerifyReply;
     if (!reply.success) return { success: false };
-    return { success: true, challengeType: reply.challenge_type, solvedAt: new Date(reply.challenge_ts), behavior: toBehavior(reply.behavior) };
+    return {
+      success: true,
+      challengeType: reply.challenge_type,
+      solvedAt: new Date(reply.challenge_ts),
+      behavior: toBehavior(reply.behavior),
+      hostname: typeof reply.hostname === "string" ? reply.hostname : "",
+    };
   }
 }
 
-/** Turns the service's error body into a WauCaptchaError, filling in what it left out. */
+/**
+ * Turns the service's error body into a WauCaptchaError, filling in what it left out. The seconds
+ * a RATE_LIMITED reply asks to wait come in metadata.retry_after, or else in Retry-After.
+ */
 function errorFromReply(body: unknown, response: Response): WauCaptchaError {
   const reply: ErrorReply = body && typeof body === "object" ? body : {};
+  const metadata = reply.metadata && typeof reply.metadata === "object" ? { ...(reply.metadata as Record<string, string>) } : {};
+  const retryAfter = response.headers.get("Retry-After");
+  if (!metadata.retry_after && retryAfter) metadata.retry_after = retryAfter;
   return new WauCaptchaError(
     typeof reply.reason === "string" && reply.reason ? reply.reason : ErrorCode.UNKNOWN,
     typeof reply.message === "string" && reply.message ? reply.message : response.statusText,
     response.status,
-    reply.metadata && typeof reply.metadata === "object" ? (reply.metadata as Record<string, string>) : {},
+    metadata,
   );
 }
 

@@ -1,4 +1,4 @@
-import { DEFAULT_LABELS as DEFAULT_WIDGET_LABELS, type WidgetLabels } from "@wau-captcha/client";
+import { DEFAULT_LABELS as DEFAULT_WIDGET_LABELS, VI_LABELS as VI_WIDGET_LABELS, type WidgetLabels } from "@wau-captcha/client";
 
 /** The texts of <WauCaptcha />; loading and checking show as spinners, so they have none. */
 export type WauCaptchaLabels = Omit<WidgetLabels, "loading" | "checking"> & {
@@ -8,10 +8,19 @@ export type WauCaptchaLabels = Omit<WidgetLabels, "loading" | "checking"> & {
   close: string;
 };
 
-const { loading, checking, ...widgetLabels } = DEFAULT_WIDGET_LABELS;
+function withoutSpinnerTexts({ loading: _loading, checking: _checking, ...labels }: WidgetLabels) {
+  return labels;
+}
 
 export const DEFAULT_LABELS: WauCaptchaLabels = {
-  ...widgetLabels,
+  ...withoutSpinnerTexts(DEFAULT_WIDGET_LABELS),
   open: "Verify you are human",
   close: "Close",
+};
+
+/** The same texts in Vietnamese, for the labels prop. */
+export const VI_LABELS: WauCaptchaLabels = {
+  ...withoutSpinnerTexts(VI_WIDGET_LABELS),
+  open: "Xác minh bạn là người",
+  close: "Đóng",
 };

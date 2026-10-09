@@ -3,7 +3,7 @@ import { type Challenge, type VerifyResult, WauCaptchaClient, type WauCaptchaCli
 import { ChallengeType, ErrorCode } from "./constants.js";
 import { addStyles, createButton, createElement } from "./dom.js";
 import { WauCaptchaError } from "./errors.js";
-import { DEFAULT_LABELS, type WidgetLabels } from "./labels.js";
+import { DEFAULT_LABELS, rateLimitedText, type WidgetLabels } from "./labels.js";
 import { createSlidePuzzle } from "./slide-puzzle.js";
 
 export interface WidgetOptions extends WauCaptchaClientOptions {
@@ -100,7 +100,9 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
 
   function fail(error: unknown) {
     const captchaError = error instanceof WauCaptchaError ? error : new WauCaptchaError(ErrorCode.UNKNOWN, String(error));
-    showStatus(`${labels.failed} (${captchaError.code})`, "negative");
+    const text =
+      captchaError.code === ErrorCode.RATE_LIMITED ? rateLimitedText(labels, captchaError.retryAfter) : `${labels.failed} (${captchaError.code})`;
+    showStatus(text, "negative");
     options.onError?.(captchaError);
   }
 
