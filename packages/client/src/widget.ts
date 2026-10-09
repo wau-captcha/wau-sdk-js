@@ -1,20 +1,10 @@
-import { type Challenge, WauCaptchaClient, type WauCaptchaClientOptions } from "./client.js";
-import { ErrorCode } from "./constants.js";
+import { type BehaviorRecorder, recordBehavior } from "./behavior-recorder.js";
+import { type Challenge, type VerifyResult, WauCaptchaClient, type WauCaptchaClientOptions } from "./client.js";
+import { ChallengeType, ErrorCode } from "./constants.js";
 import { addStyles, createButton, createElement } from "./dom.js";
 import { WauCaptchaError } from "./errors.js";
-
-export interface WidgetLabels {
-  prompt: string;
-  verify: string;
-  refresh: string;
-  loading: string;
-  checking: string;
-  wrong: string;
-  verified: string;
-  expired: string;
-  failed: string;
-  imageAlt: string;
-}
+import { DEFAULT_LABELS, rateLimitedText, type WidgetLabels } from "./labels.js";
+import { createSlidePuzzle } from "./slide-puzzle.js";
 
 export interface WidgetOptions extends WauCaptchaClientOptions {
   onSuccess?: ((token: string) => void) | undefined;
@@ -37,22 +27,10 @@ export interface WidgetHandle {
   destroy: () => void;
 }
 
-export const DEFAULT_LABELS: WidgetLabels = {
-  prompt: "Type the characters you see",
-  verify: "Verify",
-  refresh: "New challenge",
-  loading: "Loading…",
-  checking: "Checking…",
-  wrong: "That was not right. Try this one.",
-  verified: "Verified",
-  expired: "The check expired. Please solve a new challenge.",
-  failed: "The captcha could not be loaded.",
-  imageAlt: "Captcha challenge",
-};
-
 /**
  * Renders a ready-made captcha into `container`: the challenge, a text box and two buttons,
- * styled like <WauCaptcha /> from @wau-captcha/react.
+ * styled like <WauCaptcha /> from @wau-captcha/react. For slide_puzzle a slider takes the place
+ * of the text box and Verify, and releasing it submits the drag.
  * A correct answer puts the token into a hidden input named `inputName` (default
  * "wau-captcha-token"), so a form around the widget sends it with its other fields, and
  * calls onSuccess. When the token expires unused, the widget starts over and calls onExpire.
@@ -82,19 +60,28 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
   const tokenInput = createElement("input");
   tokenInput.type = "hidden";
   tokenInput.name = options.inputName ?? "wau-captcha-token";
-  panel.append(image, field, actions, statusLine);
+  const slider = createSlidePuzzle(labels, (drag) =>
+    void submit((current) => client.verifySlide(current.id, drag, { behavior: recorder?.snapshot() })),
+  );
+  panel.append(image, slider.puzzle, field, slider.track, actions, statusLine);
   root.append(panel, tokenInput);
   container.append(root);
 
   let challenge: Challenge | null = null;
   let expiryTimer: ReturnType<typeof setTimeout> | undefined;
   let busy = false;
+  // How the person behaves while the current challenge is on screen; the service checks it with the answer.
+  let recorder: BehaviorRecorder | undefined;
+
+  /** Whether the slider shows instead of the text box: the type the challenge has, or before one arrived, the one asked for. */
+  const sliding = () => (challenge ? challenge.piece !== undefined : client.challengeType === ChallengeType.SLIDE_PUZZLE);
 
   function setBusy(value: boolean) {
     busy = value;
     verifyButton.disabled = value || !challenge;
     refreshButton.disabled = value;
     answerInput.readOnly = value;
+    slider.setDisabled(value || !challenge);
   }
 
   /** Shows `text` under the buttons; a positive tone is the solved state, which hides the challenge. */
@@ -102,29 +89,42 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
     statusLine.textContent = text;
     if (tone) statusLine.dataset.tone = tone;
     else delete statusLine.dataset.tone;
-    image.hidden = tone === "positive" || !challenge;
-    field.hidden = tone === "positive";
-    actions.hidden = tone === "positive";
+    const solved = tone === "positive";
+    image.hidden = solved || !challenge || sliding();
+    slider.puzzle.hidden = solved || !challenge || !sliding();
+    field.hidden = solved || sliding();
+    slider.track.hidden = solved || !sliding();
+    verifyButton.hidden = sliding();
+    actions.hidden = solved;
   }
 
   function fail(error: unknown) {
     const captchaError = error instanceof WauCaptchaError ? error : new WauCaptchaError(ErrorCode.UNKNOWN, String(error));
-    showStatus(`${labels.failed} (${captchaError.code})`, "negative");
+    const text =
+      captchaError.code === ErrorCode.RATE_LIMITED ? rateLimitedText(labels, captchaError.retryAfter) : `${labels.failed} (${captchaError.code})`;
+    showStatus(text, "negative");
     options.onError?.(captchaError);
   }
 
   async function refresh() {
     clearTimeout(expiryTimer);
+    recorder?.stop();
+    recorder = undefined;
     tokenInput.value = "";
     answerInput.value = "";
     setBusy(true);
     showStatus(labels.loading);
     try {
       challenge = await client.newChallenge();
-      image.src = challenge.imageUrl;
-      image.width = challenge.width;
-      image.height = challenge.height;
+      if (challenge.piece) {
+        slider.show(challenge);
+      } else {
+        image.src = challenge.imageUrl;
+        image.width = challenge.width;
+        image.height = challenge.height;
+      }
       showStatus("");
+      recorder = recordBehavior({ root, input: challenge.piece ? null : answerInput });
     } catch (error) {
       challenge = null;
       fail(error);
@@ -133,13 +133,14 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
     }
   }
 
-  async function verify() {
+  /** Sends the answer `send` makes for the challenge on screen: the text typed, or the drag of the slider. */
+  async function submit(send: (current: Challenge) => Promise<VerifyResult>) {
     // A solved challenge is used up: verifying it again would fail and throw the token away.
-    if (busy || !challenge || tokenInput.value || !answerInput.value.trim()) return;
+    if (busy || !challenge || tokenInput.value) return;
     setBusy(true);
     showStatus(labels.checking);
     try {
-      const result = await client.verify(challenge.id, answerInput.value.trim());
+      const result = await send(challenge);
       if (!result.success) {
         // A challenge can be answered once, so a wrong answer needs a new one.
         await refresh();
@@ -168,13 +169,18 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
     }
   }
 
-  verifyButton.addEventListener("click", () => void verify());
+  function verify() {
+    const answer = answerInput.value.trim();
+    if (answer) void submit((current) => client.verify(current.id, answer, { behavior: recorder?.snapshot() }));
+  }
+
+  verifyButton.addEventListener("click", () => verify());
   refreshButton.addEventListener("click", () => void refresh());
   answerInput.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     // Keep Enter from submitting the surrounding form before the captcha is solved.
     event.preventDefault();
-    void verify();
+    verify();
   });
 
   void refresh();
@@ -184,6 +190,7 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
     getToken: () => tokenInput.value || null,
     destroy() {
       clearTimeout(expiryTimer);
+      recorder?.stop();
       root.remove();
     },
   };

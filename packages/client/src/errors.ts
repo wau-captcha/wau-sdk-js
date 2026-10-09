@@ -10,6 +10,11 @@ export class WauCaptchaError extends Error {
   readonly status: number;
   /** Details the service attached, e.g. `field`. */
   readonly metadata: Record<string, string>;
+  /**
+   * With ErrorCode.RATE_LIMITED: the seconds to wait before trying again, from the reply's
+   * metadata or its Retry-After header. Undefined when the reply named none.
+   */
+  readonly retryAfter: number | undefined;
 
   constructor(code: string, message: string, status = 0, metadata: Record<string, string> = {}) {
     super(message);
@@ -17,5 +22,7 @@ export class WauCaptchaError extends Error {
     this.code = code;
     this.status = status;
     this.metadata = metadata;
+    const seconds = Number.parseInt(metadata.retry_after ?? "", 10);
+    this.retryAfter = Number.isFinite(seconds) && seconds >= 0 ? seconds : undefined;
   }
 }

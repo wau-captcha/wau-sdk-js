@@ -1,6 +1,6 @@
 {
   "name": "@wau-captcha/server",
-  "version": "1.1.0",
+  "version": "1.3.0",
   "description": "Node.js SDK for WAU Captcha: redeem the tokens your frontend obtained, with your secret key.",
   "license": "MIT",
   "author": "WAU Captcha",
@@ -43,6 +43,6 @@
     "url": "git+https://github.com/wau-captcha/wau-sdk-js.git",
     "directory": "packages/server"
   },
-  "homepage": "https://github.com/wau-captcha/wau-sdk-js#readme",
+  "homepage": "https://waucaptcha.com/docs",
   "bugs": "https://github.com/wau-captcha/wau-sdk-js/issues"
 }

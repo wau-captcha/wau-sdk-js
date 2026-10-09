@@ -1,10 +1,12 @@
 import type { ChallengeType } from "./constants.js";
+import { VI_LABELS } from "./labels.js";
 import { renderWidget, type WidgetHandle } from "./widget.js";
 
 /**
  * Renders a widget into every element carrying data-wau-captcha, reading its options from
- * data attributes: data-site-key, data-base-url and optionally data-challenge-type and
- * data-input-name. Elements already rendered are skipped.
+ * data attributes: data-site-key, data-base-url and optionally data-challenge-type,
+ * data-input-name and data-lang ("vi" for Vietnamese texts, English otherwise). Elements already
+ * rendered are skipped.
  */
 export function autoRender(scope: ParentNode = document): WidgetHandle[] {
   const handles: WidgetHandle[] = [];
@@ -17,6 +19,7 @@ export function autoRender(scope: ParentNode = document): WidgetHandle[] {
         baseUrl: host.dataset.baseUrl ?? "",
         challengeType: host.dataset.challengeType as ChallengeType | undefined,
         inputName: host.dataset.inputName,
+        labels: host.dataset.lang === "vi" ? VI_LABELS : undefined,
       }),
     );
   });

@@ -1,10 +1,15 @@
 import { ChallengeType } from "./constants.js";
+import { WauCaptchaError } from "./errors.js";
 import { normalizeBaseUrl, requestJson } from "./http.js";
+import { decodeBase64, solvePow } from "./pow.js";
+import type { Challenge, SlideDrag, VerifyOptions, VerifyResult } from "./types.js";
+
+export type { Behavior, Challenge, SlideDrag, VerifyOptions, VerifyResult } from "./types.js";
 
 export interface WauCaptchaClientOptions {
   /** Public site key of the API key, "pk_…". Safe to ship to browsers. */
   siteKey: string;
-  /** Address of the WAU Captcha gateway, e.g. https://captcha.example.com. */
+  /** Address of the WAU Captcha API, e.g. https://api.waucaptcha.com. https only, but for localhost. */
   baseUrl: string;
   /** Type asked for when newChallenge names none. Default ChallengeType.IMAGE_DISTORT. */
   challengeType?: ChallengeType | undefined;
@@ -13,24 +18,6 @@ export interface WauCaptchaClientOptions {
   /** Fetch implementation to use instead of the global one. */
   fetch?: typeof fetch | undefined;
 }
-
-export interface Challenge {
-  /** Pass it to verify together with the answer. */
-  id: string;
-  type: ChallengeType;
-  /** A data: URL, ready for an <img> src. */
-  imageUrl: string;
-  /** "image/png" or "image/gif". */
-  mimeType: string;
-  /** Size to display the image at, in CSS pixels. */
-  width: number;
-  height: number;
-  /** After this the challenge can no longer be answered. */
-  expiresAt: Date;
-}
-
-/** A correct answer carries the one-time token your backend redeems with @wau-captcha/server. */
-export type VerifyResult = { success: true; token: string; expiresAt: Date } | { success: false };
 
 /** GET /challenge/new, as the service sends it. */
 interface ChallengeReply {
@@ -43,6 +30,14 @@ interface ChallengeReply {
   height: number;
   /** Seconds until the challenge can no longer be answered. */
   expires_in: number;
+  /** slide_puzzle only: the piece, a base64-encoded PNG, and where it sits on the image. */
+  piece_image?: string;
+  piece_y?: number;
+  piece_width?: number;
+  piece_height?: number;
+  /** The proof of work: 16 bytes, base64-encoded, and the zero bits asked for; 0 asks for none. */
+  pow_salt?: string;
+  pow_difficulty?: number;
 }
 
 /** POST /challenge/verify, as the service sends it: fields left out are false or empty. */
@@ -53,6 +48,9 @@ interface VerifyReply {
   expires_in?: number;
 }
 
+/** Challenges whose proof of work is kept while they wait for an answer; older ones are dropped. */
+const MAX_PENDING_WORK = 4;
+
 /** Talks to the public captcha API from a browser: fetch a challenge, submit its answer. */
 export class WauCaptchaClient {
   readonly siteKey: string;
@@ -60,6 +58,8 @@ export class WauCaptchaClient {
   readonly challengeType: ChallengeType;
   readonly timeoutMs: number;
   private readonly fetch: typeof fetch;
+  /** The proof of work of each challenge fetched and not answered yet, being solved or solved. */
+  private readonly work = new Map<string, { nonce: Promise<string | undefined>; stop: AbortController }>();
 
   constructor(options: WauCaptchaClientOptions) {
     if (!options || typeof options.siteKey !== "string" || !options.siteKey.trim()) {
@@ -72,7 +72,11 @@ export class WauCaptchaClient {
     this.fetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   }
 
-  /** Fetches a new challenge. Each challenge can be answered once. */
+  /**
+   * Fetches a new challenge and starts its proof of work in the background, in slices that keep
+   * the page responsive. Each challenge can be answered once. Fetch one when it is about to be
+   * shown, not ahead of time: challenges fetched and never answered count against the key.
+   */
   async newChallenge(options: { challengeType?: ChallengeType | undefined; signal?: AbortSignal | undefined } = {}): Promise<Challenge> {
     const query = new URLSearchParams({
       site_key: this.siteKey,
@@ -85,7 +89,7 @@ export class WauCaptchaClient {
       timeoutMs: this.timeoutMs,
       signal: options.signal,
     });
-    return {
+    const challenge: Challenge = {
       id: reply.challenge_id,
       type: reply.challenge_type,
       imageUrl: `data:${reply.mime_type};base64,${reply.image}`,
@@ -93,26 +97,87 @@ export class WauCaptchaClient {
       width: reply.width,
       height: reply.height,
       expiresAt: new Date(Date.now() + reply.expires_in * 1000),
+      ...(reply.piece_image
+        ? {
+            piece: {
+              imageUrl: `data:image/png;base64,${reply.piece_image}`,
+              y: reply.piece_y ?? 0,
+              width: reply.piece_width ?? 0,
+              height: reply.piece_height ?? 0,
+            },
+          }
+        : {}),
     };
+    const salt = reply.pow_salt ? decodeBase64(reply.pow_salt) : undefined;
+    if (salt && reply.pow_difficulty && reply.pow_difficulty > 0) {
+      challenge.pow = { salt, difficulty: reply.pow_difficulty };
+      this.startWork(challenge.id, salt, reply.pow_difficulty);
+    }
+    return challenge;
   }
 
   /**
-   * Submits an answer. The challenge is used up either way: after a wrong answer, fetch a
-   * new one. Answers are not case-sensitive.
+   * Submits an answer, with the site key and the proof of work of the challenge. The challenge is
+   * used up either way: after a wrong answer, fetch a new one. Answers are not case-sensitive.
+   * With `behavior` the service also checks how the person behaved, and refuses an answer a
+   * script clearly gave; a key that requires behaviour refuses an answer without it
+   * (ErrorCode.BEHAVIOR_REQUIRED).
    */
-  async verify(challengeId: string, answer: string, options: { signal?: AbortSignal | undefined } = {}): Promise<VerifyResult> {
-    const reply = await requestJson<VerifyReply>({
-      fetch: this.fetch,
-      url: `${this.baseUrl}/challenge/verify`,
-      init: {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ challenge_id: challengeId, answer }),
-      },
-      timeoutMs: this.timeoutMs,
-      signal: options.signal,
-    });
+  async verify(challengeId: string, answer: string, options: VerifyOptions = {}): Promise<VerifyResult> {
+    const powNonce = options.powNonce ?? (await this.work.get(challengeId)?.nonce);
+    const body = {
+      challenge_id: challengeId,
+      answer,
+      site_key: this.siteKey,
+      ...(options.behavior ? { behavior: options.behavior } : {}),
+      ...(powNonce !== undefined ? { pow_nonce: powNonce } : {}),
+    };
+    let reply: VerifyReply;
+    try {
+      reply = await requestJson<VerifyReply>({
+        fetch: this.fetch,
+        url: `${this.baseUrl}/challenge/verify`,
+        init: {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        },
+        timeoutMs: this.timeoutMs,
+        signal: options.signal,
+      });
+    } catch (error) {
+      // Without a reply the challenge may still be open, and a retry needs its proof of work.
+      if (!(error instanceof WauCaptchaError) || error.status !== 0) this.stopWork(challengeId);
+      throw error;
+    }
+    this.stopWork(challengeId);
     if (!reply.success || !reply.token) return { success: false };
     return { success: true, token: reply.token, expiresAt: new Date(Date.now() + (reply.expires_in ?? 0) * 1000) };
   }
+
+  /** Submits a slide_puzzle drag: verify with the drag written as the JSON the service reads. */
+  verifySlide(challengeId: string, drag: SlideDrag, options: VerifyOptions = {}): Promise<VerifyResult> {
+    const answer = JSON.stringify({ x: round1(drag.x), t: drag.trail.map(([t, x, y]) => [round1(t), round1(x), round1(y)]) });
+    return this.verify(challengeId, answer, options);
+  }
+
+  private startWork(challengeId: string, salt: Uint8Array, difficulty: number) {
+    const stop = new AbortController();
+    this.work.set(challengeId, { nonce: solvePow(salt, challengeId, difficulty, { signal: stop.signal }), stop });
+    // A challenge fetched again and again without an answer must not keep its work forever.
+    for (const id of this.work.keys()) {
+      if (this.work.size <= MAX_PENDING_WORK) break;
+      this.stopWork(id);
+    }
+  }
+
+  private stopWork(challengeId: string) {
+    this.work.get(challengeId)?.stop.abort();
+    this.work.delete(challengeId);
+  }
+}
+
+/** Tenths of a pixel or millisecond are as precise as the check needs, and keep the answer short. */
+function round1(value: number): number {
+  return Math.round(value * 10) / 10;
 }

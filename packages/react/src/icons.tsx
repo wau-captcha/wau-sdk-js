@@ -16,6 +16,7 @@ function Icon({ path, className = "wau-captcha__icon" }: { path: string; classNa
   );
 }
 
+export const ArrowRightIcon = () => <Icon path="M5 12h14M13 6l6 6-6 6" />;
 export const CheckIcon = () => <Icon path="M20 6 9 17l-5-5" />;
 export const CloseIcon = () => <Icon path="M18 6 6 18M6 6l12 12" />;
 export const RefreshIcon = () => <Icon path="M20 12a8 8 0 1 1-2.34-5.66L20 9M20 4v5h-5" />;
