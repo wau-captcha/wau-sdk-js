@@ -36,6 +36,14 @@ transition:box-shadow .15s,opacity .15s}
 .wau-captcha__handle:active:enabled{cursor:grabbing}
 .wau-captcha__handle:focus-visible{box-shadow:0 0 0 1px var(--_focus-border),0 0 0 4px var(--_focus-ring)}
 .wau-captcha__handle:disabled{cursor:default;opacity:.5}
+.wau-captcha__jump{position:relative;overflow:hidden;border-radius:6px;background:var(--_muted);user-select:none;-webkit-user-select:none}
+.wau-captcha__jump-screen{position:absolute;inset:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.wau-captcha__jump-screen img{position:absolute;inset:0;display:block;width:100%;height:100%;-webkit-touch-callout:none}
+.wau-captcha__round{position:absolute;top:6px;left:6px;padding:0 6px;border-radius:9px;background:rgb(0 0 0/.55);color:#fff;
+font-size:12px;font-weight:500;line-height:18px;pointer-events:none}
+.wau-captcha__ring{position:absolute;box-sizing:border-box;width:24px;height:24px;border:2px solid #fff;border-radius:50%;
+box-shadow:0 0 0 2px var(--_primary);transform:translate(-50%,-50%);pointer-events:none}
+.wau-captcha__jump-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:500;line-height:1.25}
 .wau-captcha__field{display:grid;gap:6px;font-weight:500}
 .wau-captcha__input{box-sizing:border-box;width:100%;height:40px;margin:0;padding:0 12px;border:1px solid var(--_border);border-radius:6px;
 background:transparent;color:inherit;font:inherit;font-weight:450;outline:none;transition:border-color .15s,box-shadow .15s,opacity .15s}
@@ -53,6 +61,7 @@ font:inherit;font-weight:500;line-height:1.25;cursor:pointer;outline:none;transi
 .wau-captcha__button:is([data-variant=outline],[data-variant=ghost]):hover:enabled{background:var(--_muted);color:var(--_foreground)}
 .wau-captcha__button[data-size=icon]{width:40px;padding:0}
 .wau-captcha__button[data-size=icon-sm]{width:32px;height:32px;padding:0}
+.wau-captcha__button[data-size=sm]{flex-shrink:0;gap:6px;height:32px;padding:0 12px}
 .wau-captcha__trigger{justify-content:flex-start;width:100%;border-color:var(--_border);background:var(--_background)}
 .wau-captcha__trigger:hover:enabled{background:var(--_muted)}
 .wau-captcha__trigger:disabled{cursor:default;color:var(--_positive)}

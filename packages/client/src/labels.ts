@@ -16,6 +16,10 @@ export interface WidgetLabels {
   slidePrompt: string;
   /** slide_puzzle: the aria-label of the handle. */
   sliderHandle: string;
+  /** animal_jump: the task, under the image. */
+  jumpPrompt: string;
+  /** animal_jump: the button that plays the round again, and its aria-label. */
+  replay: string;
 }
 
 export const DEFAULT_LABELS: WidgetLabels = {
@@ -32,6 +36,8 @@ export const DEFAULT_LABELS: WidgetLabels = {
   imageAlt: "Captcha challenge",
   slidePrompt: "Drag the slider to fit the piece",
   sliderHandle: "Slider",
+  jumpPrompt: "Click the animal that jumps highest",
+  replay: "Replay",
 };
 
 /** The same texts in Vietnamese: pass them as `labels`, or set data-lang="vi" on the element. */
@@ -49,6 +55,8 @@ export const VI_LABELS: WidgetLabels = {
   imageAlt: "Captcha",
   slidePrompt: "Kéo thanh trượt để ghép mảnh hình",
   sliderHandle: "Thanh trượt",
+  jumpPrompt: "Bấm vào con vật nhảy cao nhất",
+  replay: "Xem lại",
 };
 
 /** labels.rateLimited with the seconds filled in; a minute when the reply named none. */

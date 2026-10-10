@@ -2,9 +2,9 @@ import { ChallengeType } from "./constants.js";
 import { WauCaptchaError } from "./errors.js";
 import { normalizeBaseUrl, requestJson } from "./http.js";
 import { decodeBase64, solvePow } from "./pow.js";
-import type { Challenge, SlideDrag, VerifyOptions, VerifyResult } from "./types.js";
+import type { Challenge, JumpClick, SlideDrag, VerifyOptions, VerifyResult } from "./types.js";
 
-export type { Behavior, Challenge, SlideDrag, VerifyOptions, VerifyResult } from "./types.js";
+export type { Behavior, Challenge, JumpClick, SlideDrag, VerifyOptions, VerifyResult } from "./types.js";
 
 export interface WauCaptchaClientOptions {
   /** Public site key of the API key, "pk_…". Safe to ship to browsers. */
@@ -35,6 +35,8 @@ interface ChallengeReply {
   piece_y?: number;
   piece_width?: number;
   piece_height?: number;
+  /** animal_jump only: round 2, a base64-encoded GIF; image is round 1. */
+  second_image?: string;
   /** The proof of work: 16 bytes, base64-encoded, and the zero bits asked for; 0 asks for none. */
   pow_salt?: string;
   pow_difficulty?: number;
@@ -107,6 +109,7 @@ export class WauCaptchaClient {
             },
           }
         : {}),
+      ...(reply.second_image ? { secondImage: `data:${reply.mime_type};base64,${reply.second_image}` } : {}),
     };
     const salt = reply.pow_salt ? decodeBase64(reply.pow_salt) : undefined;
     if (salt && reply.pow_difficulty && reply.pow_difficulty > 0) {
@@ -158,6 +161,15 @@ export class WauCaptchaClient {
   /** Submits a slide_puzzle drag: verify with the drag written as the JSON the service reads. */
   verifySlide(challengeId: string, drag: SlideDrag, options: VerifyOptions = {}): Promise<VerifyResult> {
     const answer = JSON.stringify({ x: round1(drag.x), t: drag.trail.map(([t, x, y]) => [round1(t), round1(x), round1(y)]) });
+    return this.verify(challengeId, answer, options);
+  }
+
+  /**
+   * Submits the clicks of an animal_jump challenge, one per round in order: verify with the clicks
+   * written as the JSON the service reads.
+   */
+  verifyJump(challengeId: string, clicks: JumpClick[], options: VerifyOptions = {}): Promise<VerifyResult> {
+    const answer = JSON.stringify({ c: clicks.map(({ x, y, ms, replays }) => ({ x: round1(x), y: round1(y), ms: round1(ms), p: replays })) });
     return this.verify(challengeId, answer, options);
   }
 
