@@ -2,6 +2,29 @@
 
 Every release of the three packages, newest first. Versions follow [Semantic Versioning](https://semver.org/).
 
+## @wau-captcha/client 1.4.0
+
+- A new challenge type, `ChallengeType.ANIMAL_JUMP` (`animal_jump`): two rounds of 2 s in which five animal heads jump;
+  in each, the person clicks the one that jumps highest. The widget plays each round once with a `1/2`, `2/2` counter
+  and a Replay button (three replays a round), marks each click with a ring for 250 ms and submits both clicks after
+  round 2. Nothing is said between the rounds, so a script cannot learn which one it got wrong. Like `SLIDE_PUZZLE` it
+  needs a pointer: where accessibility matters, keep `IMAGE_DISTORT` available.
+- `Challenge.secondImage` (round 2; `imageUrl` is round 1), `verifyJump(challengeId, clicks, options)` with the
+  `JumpClick` type, and `trackJump`, which plays the rounds and records the clicks for your own UI.
+- New labels `jumpPrompt` and `replay`, in English (`DEFAULT_LABELS`) and Vietnamese (`VI_LABELS`).
+- Each playback of a round is a `blob:` object URL, so that every browser starts it from the first frame: a
+  Content-Security-Policy that limits `img-src` must allow `blob:` as well as `data:`.
+
+## @wau-captcha/server 1.4.0
+
+- `ChallengeType.ANIMAL_JUMP`: `verifyToken` returns `challengeType: "animal_jump"` for the tokens of that type.
+
+## @wau-captcha/react 1.3.0
+
+- Depends on `@wau-captcha/client` ^1.4.0. `<WauCaptcha challengeType={ChallengeType.ANIMAL_JUMP} />` shows the two
+  rounds with the Replay button, which turns into the spinner while the answer is checked. The labels gain `jumpPrompt`
+  and `replay`.
+
 ## @wau-captcha/client 1.3.0
 
 - Sends the site key with every answer (`site_key`): an answer only counts for the key whose challenge it solves.

@@ -1,3 +1,4 @@
+import { createAnimalJump } from "./animal-jump.js";
 import { type BehaviorRecorder, recordBehavior } from "./behavior-recorder.js";
 import { type Challenge, type VerifyResult, WauCaptchaClient, type WauCaptchaClientOptions } from "./client.js";
 import { ChallengeType, ErrorCode } from "./constants.js";
@@ -30,7 +31,8 @@ export interface WidgetHandle {
 /**
  * Renders a ready-made captcha into `container`: the challenge, a text box and two buttons,
  * styled like <WauCaptcha /> from @wau-captcha/react. For slide_puzzle a slider takes the place
- * of the text box and Verify, and releasing it submits the drag.
+ * of the text box and Verify, and releasing it submits the drag. For animal_jump the two rounds
+ * play one after the other with a Replay button, and the click on the second submits both clicks.
  * A correct answer puts the token into a hidden input named `inputName` (default
  * "wau-captcha-token"), so a form around the widget sends it with its other fields, and
  * calls onSuccess. When the token expires unused, the widget starts over and calls onExpire.
@@ -63,7 +65,10 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
   const slider = createSlidePuzzle(labels, (drag) =>
     void submit((current) => client.verifySlide(current.id, drag, { behavior: recorder?.snapshot() })),
   );
-  panel.append(image, slider.puzzle, field, slider.track, actions, statusLine);
+  const jump = createAnimalJump(labels, (clicks) =>
+    void submit((current) => client.verifyJump(current.id, clicks, { behavior: recorder?.snapshot() })),
+  );
+  panel.append(image, slider.puzzle, jump.stage, field, slider.track, jump.bar, actions, statusLine);
   root.append(panel, tokenInput);
   container.append(root);
 
@@ -73,8 +78,9 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
   // How the person behaves while the current challenge is on screen; the service checks it with the answer.
   let recorder: BehaviorRecorder | undefined;
 
-  /** Whether the slider shows instead of the text box: the type the challenge has, or before one arrived, the one asked for. */
+  /** Whether the slider, or the jumping animals, show instead of the text box: the type the challenge has, or before one arrived, the one asked for. */
   const sliding = () => (challenge ? challenge.piece !== undefined : client.challengeType === ChallengeType.SLIDE_PUZZLE);
+  const jumping = () => (challenge ? challenge.secondImage !== undefined : client.challengeType === ChallengeType.ANIMAL_JUMP);
 
   function setBusy(value: boolean) {
     busy = value;
@@ -82,6 +88,7 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
     refreshButton.disabled = value;
     answerInput.readOnly = value;
     slider.setDisabled(value || !challenge);
+    jump.setDisabled(value || !challenge);
   }
 
   /** Shows `text` under the buttons; a positive tone is the solved state, which hides the challenge. */
@@ -90,11 +97,14 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
     if (tone) statusLine.dataset.tone = tone;
     else delete statusLine.dataset.tone;
     const solved = tone === "positive";
-    image.hidden = solved || !challenge || sliding();
+    const typing = !sliding() && !jumping();
+    image.hidden = solved || !challenge || !typing;
     slider.puzzle.hidden = solved || !challenge || !sliding();
-    field.hidden = solved || sliding();
+    jump.stage.hidden = solved || !challenge || !jumping();
+    field.hidden = solved || !typing;
     slider.track.hidden = solved || !sliding();
-    verifyButton.hidden = sliding();
+    jump.bar.hidden = solved || !jumping();
+    verifyButton.hidden = !typing;
     actions.hidden = solved;
   }
 
@@ -118,13 +128,15 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
       challenge = await client.newChallenge();
       if (challenge.piece) {
         slider.show(challenge);
+      } else if (challenge.secondImage) {
+        jump.show(challenge);
       } else {
         image.src = challenge.imageUrl;
         image.width = challenge.width;
         image.height = challenge.height;
       }
       showStatus("");
-      recorder = recordBehavior({ root, input: challenge.piece ? null : answerInput });
+      recorder = recordBehavior({ root, input: challenge.piece || challenge.secondImage ? null : answerInput });
     } catch (error) {
       challenge = null;
       fail(error);
@@ -133,7 +145,7 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
     }
   }
 
-  /** Sends the answer `send` makes for the challenge on screen: the text typed, or the drag of the slider. */
+  /** Sends the answer `send` makes for the challenge on screen: the text typed, the drag of the slider or the clicks of the rounds. */
   async function submit(send: (current: Challenge) => Promise<VerifyResult>) {
     // A solved challenge is used up: verifying it again would fail and throw the token away.
     if (busy || !challenge || tokenInput.value) return;
@@ -191,6 +203,7 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
     destroy() {
       clearTimeout(expiryTimer);
       recorder?.stop();
+      jump.stop();
       root.remove();
     },
   };

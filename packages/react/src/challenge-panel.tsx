@@ -1,5 +1,14 @@
-import { type BehaviorRecorder, ChallengeType, ErrorCode, recordBehavior, type SlideDrag, type WauCaptchaError } from "@wau-captcha/client";
+import {
+  type BehaviorRecorder,
+  ChallengeType,
+  ErrorCode,
+  type JumpClick,
+  recordBehavior,
+  type SlideDrag,
+  type WauCaptchaError,
+} from "@wau-captcha/client";
 import { type KeyboardEvent, useEffect, useRef } from "react";
+import { AnimalJump } from "./animal-jump.js";
 import { CheckIcon, RefreshIcon, SpinnerIcon } from "./icons.js";
 import type { WauCaptchaLabels } from "./labels.js";
 import { SlidePuzzle } from "./slide-puzzle.js";
@@ -10,6 +19,7 @@ const IMAGE_ASPECT_RATIO: Record<ChallengeType, string> = {
   [ChallengeType.IMAGE_DISTORT]: "200 / 70",
   [ChallengeType.MOTION_NOISE]: "300 / 150",
   [ChallengeType.SLIDE_PUZZLE]: "300 / 150",
+  [ChallengeType.ANIMAL_JUMP]: "2 / 1",
 };
 
 export type ChallengePanelProps = {
@@ -20,7 +30,8 @@ export type ChallengePanelProps = {
 
 /**
  * The challenge image, the answer box, Verify and New challenge, and a status line. For
- * slide_puzzle the piece and its slider take the place of the image, the box and Verify.
+ * slide_puzzle the piece and its slider take the place of the image, the box and Verify; for
+ * animal_jump the rounds and the Replay button do.
  */
 export function ChallengePanel({ captcha, labels, challengeType }: ChallengePanelProps) {
   const { status, notice, challenge, error } = captcha;
@@ -37,6 +48,7 @@ export function ChallengePanel({ captcha, labels, challengeType }: ChallengePane
   const failed = status === CaptchaStatus.FAILED;
   // The type of the challenge on screen or, before one arrived, the type asked for.
   const sliding = challenge ? challenge.piece !== undefined : challengeType === ChallengeType.SLIDE_PUZZLE;
+  const jumping = challenge ? challenge.secondImage !== undefined : challengeType === ChallengeType.ANIMAL_JUMP;
 
   useEffect(() => {
     if (answerInputRef.current) answerInputRef.current.value = "";
@@ -44,7 +56,7 @@ export function ChallengePanel({ captcha, labels, challengeType }: ChallengePane
 
   useEffect(() => {
     if (!challenge || !panelRef.current) return;
-    const recorder = recordBehavior({ root: panelRef.current, input: challenge.piece ? null : answerInputRef.current });
+    const recorder = recordBehavior({ root: panelRef.current, input: challenge.piece || challenge.secondImage ? null : answerInputRef.current });
     recorderRef.current = recorder;
     return () => {
       recorder.stop();
@@ -67,6 +79,10 @@ export function ChallengePanel({ captcha, labels, challengeType }: ChallengePane
 
   function submitDrag(drag: SlideDrag) {
     if (answerable) void captcha.verifySlide(challenge.id, drag, recorderRef.current?.snapshot());
+  }
+
+  function submitClicks(clicks: JumpClick[]) {
+    if (answerable) void captcha.verifyJump(challenge.id, clicks, recorderRef.current?.snapshot());
   }
 
   function submitOnEnter(event: KeyboardEvent<HTMLInputElement>) {
@@ -96,6 +112,16 @@ export function ChallengePanel({ captcha, labels, challengeType }: ChallengePane
               labels={labels}
               onDrag={submitDrag}
             />
+          ) : jumping ? (
+            <AnimalJump
+              key={challenge?.id}
+              challenge={challenge}
+              aspectRatio={IMAGE_ASPECT_RATIO[challengeType]}
+              answerable={answerable}
+              checking={checking}
+              labels={labels}
+              onAnswer={submitClicks}
+            />
           ) : (
             <>
               {challenge ? (
@@ -124,7 +150,7 @@ export function ChallengePanel({ captcha, labels, challengeType }: ChallengePane
             </>
           )}
           <div className="wau-captcha__actions">
-            {!sliding && (
+            {!sliding && !jumping && (
               <button
                 type="button"
                 className="wau-captcha__button"

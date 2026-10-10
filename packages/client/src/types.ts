@@ -19,6 +19,11 @@ export interface Challenge {
    */
   piece?: { imageUrl: string; y: number; width: number; height: number };
   /**
+   * animal_jump only: round 2, an animated GIF as a data: URL; imageUrl is round 1. Each plays
+   * once and lasts 2 s. trackJump plays them and records the clicks.
+   */
+  secondImage?: string;
+  /**
    * The proof of work the service asks for: SHA-256(salt ‖ id ‖ nonce) must start with
    * `difficulty` zero bits. WauCaptchaClient solves it in the background as soon as the challenge
    * arrives and sends the nonce with the answer; there is nothing to do with it.
@@ -32,6 +37,13 @@ export interface Challenge {
  * went down], in CSS pixels of the image. trackSlide records it.
  */
 export type SlideDrag = { x: number; trail: Array<[number, number, number]> };
+
+/**
+ * The click of one animal_jump round: where it landed, in CSS pixels of the image; the ms since
+ * the playback it was made in started, which a replay starts again; and the replays used in the
+ * round. trackJump records it.
+ */
+export type JumpClick = { x: number; y: number; ms: number; replays: number };
 
 /**
  * How the person behaved while a challenge was on screen, as recordBehavior records it and the

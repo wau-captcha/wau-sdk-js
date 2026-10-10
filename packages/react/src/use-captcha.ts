@@ -2,6 +2,7 @@ import {
   type Behavior,
   type Challenge,
   ErrorCode,
+  type JumpClick,
   type SlideDrag,
   type VerifyResult,
   WauCaptchaClient,
@@ -55,6 +56,8 @@ export type Captcha = CaptchaState & {
   verify: (challengeId: string, answer: string, behavior?: Behavior) => Promise<void>;
   /** Submits the drag of a slide_puzzle challenge, like verify. */
   verifySlide: (challengeId: string, drag: SlideDrag, behavior?: Behavior) => Promise<void>;
+  /** Submits the clicks of an animal_jump challenge, one per round, like verify. */
+  verifyJump: (challengeId: string, clicks: JumpClick[], behavior?: Behavior) => Promise<void>;
 };
 
 const INITIAL_STATE: CaptchaState = {
@@ -107,7 +110,7 @@ export function useCaptcha({ siteKey, baseUrl, challengeType, timeoutMs, eager, 
     [client, startRequest, fail],
   );
 
-  /** Sends the answer `send` makes: the text typed, or the drag of the slider. */
+  /** Sends the answer `send` makes: the text typed, the drag of the slider or the clicks of the rounds. */
   const submit = useCallback(
     async (send: (signal: AbortSignal) => Promise<VerifyResult>) => {
       const signal = startRequest();
@@ -140,6 +143,12 @@ export function useCaptcha({ siteKey, baseUrl, challengeType, timeoutMs, eager, 
     [client, submit],
   );
 
+  const verifyJump = useCallback(
+    (challengeId: string, clicks: JumpClick[], behavior?: Behavior) =>
+      submit((signal) => client.verifyJump(challengeId, clicks, { signal, behavior })),
+    [client, submit],
+  );
+
   useEffect(() => {
     if (eager) void load();
     return () => requestRef.current?.abort();
@@ -155,5 +164,5 @@ export function useCaptcha({ siteKey, baseUrl, challengeType, timeoutMs, eager, 
     return () => clearTimeout(timer);
   }, [state.tokenExpiresAt, eager, load]);
 
-  return { ...state, load, verify, verifySlide };
+  return { ...state, load, verify, verifySlide, verifyJump };
 }
