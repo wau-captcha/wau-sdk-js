@@ -2,9 +2,9 @@ import { ChallengeType } from "./constants.js";
 import { WauCaptchaError } from "./errors.js";
 import { normalizeBaseUrl, requestJson } from "./http.js";
 import { decodeBase64, solvePow } from "./pow.js";
-import type { Challenge, JumpClick, SlideDrag, VerifyOptions, VerifyResult } from "./types.js";
+import type { Challenge, JumpClick, RotateRound, SlideDrag, VerifyOptions, VerifyResult } from "./types.js";
 
-export type { Behavior, Challenge, JumpClick, SlideDrag, VerifyOptions, VerifyResult } from "./types.js";
+export type { Behavior, Challenge, JumpClick, RotatePress, RotateRound, SlideDrag, VerifyOptions, VerifyResult } from "./types.js";
 
 export interface WauCaptchaClientOptions {
   /** Public site key of the API key, "pk_…". Safe to ship to browsers. */
@@ -35,8 +35,10 @@ interface ChallengeReply {
   piece_y?: number;
   piece_width?: number;
   piece_height?: number;
-  /** animal_jump only: round 2, a base64-encoded GIF; image is round 1. */
+  /** Round 2, image being round 1: animal_jump's GIF, object_rotate's strip; base64-encoded. */
   second_image?: string;
+  /** object_rotate only: image and second_image are each this many frames side by side. */
+  frame_count?: number;
   /** The proof of work: 16 bytes, base64-encoded, and the zero bits asked for; 0 asks for none. */
   pow_salt?: string;
   pow_difficulty?: number;
@@ -110,6 +112,7 @@ export class WauCaptchaClient {
           }
         : {}),
       ...(reply.second_image ? { secondImage: `data:${reply.mime_type};base64,${reply.second_image}` } : {}),
+      ...(reply.frame_count ? { frameCount: reply.frame_count } : {}),
     };
     const salt = reply.pow_salt ? decodeBase64(reply.pow_salt) : undefined;
     if (salt && reply.pow_difficulty && reply.pow_difficulty > 0) {
@@ -170,6 +173,21 @@ export class WauCaptchaClient {
    */
   verifyJump(challengeId: string, clicks: JumpClick[], options: VerifyOptions = {}): Promise<VerifyResult> {
     const answer = JSON.stringify({ c: clicks.map(({ x, y, ms, replays }) => ({ x: round1(x), y: round1(y), ms: round1(ms), p: replays })) });
+    return this.verify(challengeId, answer, options);
+  }
+
+  /**
+   * Submits the presses of an object_rotate challenge, one round each in order: verify with the
+   * rounds written as the JSON the service reads.
+   */
+  verifyRotate(challengeId: string, rounds: RotateRound[], options: VerifyOptions = {}): Promise<VerifyResult> {
+    const answer = JSON.stringify({
+      r: rounds.map(({ frame, presses, doneMs }) => ({
+        f: frame,
+        s: presses.map(({ ms, direction }) => [Math.round(ms), direction]),
+        done: Math.round(doneMs),
+      })),
+    });
     return this.verify(challengeId, answer, options);
   }
 

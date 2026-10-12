@@ -6,9 +6,9 @@ export interface Challenge {
   type: ChallengeType;
   /** A data: URL, ready for an <img> src. */
   imageUrl: string;
-  /** "image/png", "image/gif" or, for slide_puzzle, "image/jpeg". */
+  /** "image/png", "image/gif" or, for slide_puzzle and object_rotate, "image/jpeg". */
   mimeType: string;
-  /** Size to display the image at, in CSS pixels. */
+  /** Size to display the image at, in CSS pixels; for object_rotate, the size of one frame. */
   width: number;
   height: number;
   /** After this the challenge can no longer be answered. */
@@ -19,10 +19,16 @@ export interface Challenge {
    */
   piece?: { imageUrl: string; y: number; width: number; height: number };
   /**
-   * animal_jump only: round 2, an animated GIF as a data: URL; imageUrl is round 1. Each plays
-   * once and lasts 2 s. trackJump plays them and records the clicks.
+   * Round 2 as a data: URL, imageUrl being round 1. animal_jump: an animated GIF; each plays once
+   * and lasts 2 s, and trackJump plays them and records the clicks. object_rotate: a strip of
+   * frameCount frames; trackRotate shows them and records the presses.
    */
   secondImage?: string;
+  /**
+   * object_rotate only: imageUrl and secondImage are each this many frames of width × height side
+   * by side, frame k the object turned k steps clockwise as seen from above.
+   */
+  frameCount?: number;
   /**
    * The proof of work the service asks for: SHA-256(salt ‖ id ‖ nonce) must start with
    * `difficulty` zero bits. WauCaptchaClient solves it in the background as soon as the challenge
@@ -44,6 +50,19 @@ export type SlideDrag = { x: number; trail: Array<[number, number, number]> };
  * round. trackJump records it.
  */
 export type JumpClick = { x: number; y: number; ms: number; replays: number };
+
+/**
+ * One press of an object_rotate round: when, in whole ms since the round was shown, and which
+ * way: 1 for Rotate right, the object turning a frame clockwise as seen from above, -1 for Rotate
+ * left.
+ */
+export type RotatePress = { ms: number; direction: 1 | -1 };
+
+/**
+ * One object_rotate round: the frame on screen when Done was pressed, from 0; every press, in
+ * order; and when Done was pressed, in whole ms since the round was shown. trackRotate records it.
+ */
+export type RotateRound = { frame: number; presses: RotatePress[]; doneMs: number };
 
 /**
  * How the person behaved while a challenge was on screen, as recordBehavior records it and the

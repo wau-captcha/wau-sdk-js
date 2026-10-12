@@ -3,6 +3,7 @@ import {
   ChallengeType,
   ErrorCode,
   type JumpClick,
+  type RotateRound,
   recordBehavior,
   type SlideDrag,
   type WauCaptchaError,
@@ -11,6 +12,7 @@ import { type KeyboardEvent, useEffect, useRef } from "react";
 import { AnimalJump } from "./animal-jump.js";
 import { CheckIcon, RefreshIcon, SpinnerIcon } from "./icons.js";
 import type { WauCaptchaLabels } from "./labels.js";
+import { ObjectRotate } from "./object-rotate.js";
 import { SlidePuzzle } from "./slide-puzzle.js";
 import { type Captcha, CaptchaNotice, CaptchaStatus } from "./use-captcha.js";
 
@@ -20,6 +22,7 @@ const IMAGE_ASPECT_RATIO: Record<ChallengeType, string> = {
   [ChallengeType.MOTION_NOISE]: "300 / 150",
   [ChallengeType.SLIDE_PUZZLE]: "300 / 150",
   [ChallengeType.ANIMAL_JUMP]: "2 / 1",
+  [ChallengeType.OBJECT_ROTATE]: "2 / 1",
 };
 
 export type ChallengePanelProps = {
@@ -31,7 +34,8 @@ export type ChallengePanelProps = {
 /**
  * The challenge image, the answer box, Verify and New challenge, and a status line. For
  * slide_puzzle the piece and its slider take the place of the image, the box and Verify; for
- * animal_jump the rounds and the Replay button do.
+ * animal_jump the rounds and the Replay button do; for object_rotate the rounds with Rotate left,
+ * Rotate right and Done.
  */
 export function ChallengePanel({ captcha, labels, challengeType }: ChallengePanelProps) {
   const { status, notice, challenge, error } = captcha;
@@ -48,7 +52,8 @@ export function ChallengePanel({ captcha, labels, challengeType }: ChallengePane
   const failed = status === CaptchaStatus.FAILED;
   // The type of the challenge on screen or, before one arrived, the type asked for.
   const sliding = challenge ? challenge.piece !== undefined : challengeType === ChallengeType.SLIDE_PUZZLE;
-  const jumping = challenge ? challenge.secondImage !== undefined : challengeType === ChallengeType.ANIMAL_JUMP;
+  const rotating = challenge ? challenge.frameCount !== undefined : challengeType === ChallengeType.OBJECT_ROTATE;
+  const jumping = challenge ? challenge.secondImage !== undefined && !rotating : challengeType === ChallengeType.ANIMAL_JUMP;
 
   useEffect(() => {
     if (answerInputRef.current) answerInputRef.current.value = "";
@@ -56,7 +61,9 @@ export function ChallengePanel({ captcha, labels, challengeType }: ChallengePane
 
   useEffect(() => {
     if (!challenge || !panelRef.current) return;
-    const recorder = recordBehavior({ root: panelRef.current, input: challenge.piece || challenge.secondImage ? null : answerInputRef.current });
+    // object_rotate is turned with the arrow keys too: its key presses are timed on the whole panel.
+    const keys = challenge.frameCount ? panelRef.current : challenge.piece || challenge.secondImage ? null : answerInputRef.current;
+    const recorder = recordBehavior({ root: panelRef.current, input: keys });
     recorderRef.current = recorder;
     return () => {
       recorder.stop();
@@ -83,6 +90,10 @@ export function ChallengePanel({ captcha, labels, challengeType }: ChallengePane
 
   function submitClicks(clicks: JumpClick[]) {
     if (answerable) void captcha.verifyJump(challenge.id, clicks, recorderRef.current?.snapshot());
+  }
+
+  function submitRounds(rounds: RotateRound[]) {
+    if (answerable) void captcha.verifyRotate(challenge.id, rounds, recorderRef.current?.snapshot());
   }
 
   function submitOnEnter(event: KeyboardEvent<HTMLInputElement>) {
@@ -122,6 +133,16 @@ export function ChallengePanel({ captcha, labels, challengeType }: ChallengePane
               labels={labels}
               onAnswer={submitClicks}
             />
+          ) : rotating ? (
+            <ObjectRotate
+              key={challenge?.id}
+              challenge={challenge}
+              aspectRatio={IMAGE_ASPECT_RATIO[challengeType]}
+              answerable={answerable}
+              checking={checking}
+              labels={labels}
+              onAnswer={submitRounds}
+            />
           ) : (
             <>
               {challenge ? (
@@ -150,7 +171,7 @@ export function ChallengePanel({ captcha, labels, challengeType }: ChallengePane
             </>
           )}
           <div className="wau-captcha__actions">
-            {!sliding && !jumping && (
+            {!sliding && !jumping && !rotating && (
               <button
                 type="button"
                 className="wau-captcha__button"

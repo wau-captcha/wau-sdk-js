@@ -19,7 +19,7 @@ const result = await wau.verifyToken(token);
 if (!result.success) {
   // unknown, expired, already used, or issued for another key
 } else {
-  result.challengeType; // "image_distort", "motion_noise", "slide_puzzle" or "animal_jump"
+  result.challengeType; // "image_distort", "motion_noise", "slide_puzzle", "animal_jump" or "object_rotate"
   result.hostname; // the website the challenge was solved on: compare it with yours
   result.behavior; // { verdict, score, reasons }: refuse not_measured, decide about suspicious
 }

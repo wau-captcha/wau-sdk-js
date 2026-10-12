@@ -5,6 +5,7 @@ import { ChallengeType, ErrorCode } from "./constants.js";
 import { addStyles, createButton, createElement } from "./dom.js";
 import { WauCaptchaError } from "./errors.js";
 import { DEFAULT_LABELS, rateLimitedText, type WidgetLabels } from "./labels.js";
+import { createObjectRotate } from "./object-rotate.js";
 import { createSlidePuzzle } from "./slide-puzzle.js";
 
 export interface WidgetOptions extends WauCaptchaClientOptions {
@@ -33,6 +34,8 @@ export interface WidgetHandle {
  * styled like <WauCaptcha /> from @wau-captcha/react. For slide_puzzle a slider takes the place
  * of the text box and Verify, and releasing it submits the drag. For animal_jump the two rounds
  * play one after the other with a Replay button, and the click on the second submits both clicks.
+ * For object_rotate the two rounds follow one another with Rotate left, Rotate right and Done
+ * (or the arrow keys and Enter on the image), and Done on the second submits both rounds.
  * A correct answer puts the token into a hidden input named `inputName` (default
  * "wau-captcha-token"), so a form around the widget sends it with its other fields, and
  * calls onSuccess. When the token expires unused, the widget starts over and calls onExpire.
@@ -68,7 +71,10 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
   const jump = createAnimalJump(labels, (clicks) =>
     void submit((current) => client.verifyJump(current.id, clicks, { behavior: recorder?.snapshot() })),
   );
-  panel.append(image, slider.puzzle, jump.stage, field, slider.track, jump.bar, actions, statusLine);
+  const rotate = createObjectRotate(labels, (rounds) =>
+    void submit((current) => client.verifyRotate(current.id, rounds, { behavior: recorder?.snapshot() })),
+  );
+  panel.append(image, slider.puzzle, jump.stage, rotate.task, rotate.stage, field, slider.track, jump.bar, rotate.bar, actions, statusLine);
   root.append(panel, tokenInput);
   container.append(root);
 
@@ -78,9 +84,10 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
   // How the person behaves while the current challenge is on screen; the service checks it with the answer.
   let recorder: BehaviorRecorder | undefined;
 
-  /** Whether the slider, or the jumping animals, show instead of the text box: the type the challenge has, or before one arrived, the one asked for. */
+  /** Whether the slider, the jumping animals or the object to turn show instead of the text box: the type the challenge has, or before one arrived, the one asked for. */
   const sliding = () => (challenge ? challenge.piece !== undefined : client.challengeType === ChallengeType.SLIDE_PUZZLE);
-  const jumping = () => (challenge ? challenge.secondImage !== undefined : client.challengeType === ChallengeType.ANIMAL_JUMP);
+  const rotating = () => (challenge ? challenge.frameCount !== undefined : client.challengeType === ChallengeType.OBJECT_ROTATE);
+  const jumping = () => (challenge ? challenge.secondImage !== undefined && !rotating() : client.challengeType === ChallengeType.ANIMAL_JUMP);
 
   function setBusy(value: boolean) {
     busy = value;
@@ -89,6 +96,7 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
     answerInput.readOnly = value;
     slider.setDisabled(value || !challenge);
     jump.setDisabled(value || !challenge);
+    rotate.setDisabled(value || !challenge);
   }
 
   /** Shows `text` under the buttons; a positive tone is the solved state, which hides the challenge. */
@@ -97,13 +105,16 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
     if (tone) statusLine.dataset.tone = tone;
     else delete statusLine.dataset.tone;
     const solved = tone === "positive";
-    const typing = !sliding() && !jumping();
+    const typing = !sliding() && !jumping() && !rotating();
     image.hidden = solved || !challenge || !typing;
     slider.puzzle.hidden = solved || !challenge || !sliding();
     jump.stage.hidden = solved || !challenge || !jumping();
+    rotate.task.hidden = solved || !rotating();
+    rotate.stage.hidden = solved || !challenge || !rotating();
     field.hidden = solved || !typing;
     slider.track.hidden = solved || !sliding();
     jump.bar.hidden = solved || !jumping();
+    rotate.bar.hidden = solved || !rotating();
     verifyButton.hidden = !typing;
     actions.hidden = solved;
   }
@@ -128,6 +139,8 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
       challenge = await client.newChallenge();
       if (challenge.piece) {
         slider.show(challenge);
+      } else if (challenge.frameCount) {
+        rotate.show(challenge);
       } else if (challenge.secondImage) {
         jump.show(challenge);
       } else {
@@ -136,7 +149,9 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
         image.height = challenge.height;
       }
       showStatus("");
-      recorder = recordBehavior({ root, input: challenge.piece || challenge.secondImage ? null : answerInput });
+      // object_rotate is turned with the arrow keys too: its key presses are timed on the whole widget.
+      const keys = challenge.frameCount ? root : challenge.piece || challenge.secondImage ? null : answerInput;
+      recorder = recordBehavior({ root, input: keys });
     } catch (error) {
       challenge = null;
       fail(error);
@@ -145,7 +160,7 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
     }
   }
 
-  /** Sends the answer `send` makes for the challenge on screen: the text typed, the drag of the slider or the clicks of the rounds. */
+  /** Sends the answer `send` makes for the challenge on screen: the text typed, the drag of the slider, the clicks or the presses of the rounds. */
   async function submit(send: (current: Challenge) => Promise<VerifyResult>) {
     // A solved challenge is used up: verifying it again would fail and throw the token away.
     if (busy || !challenge || tokenInput.value) return;
@@ -204,6 +219,7 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
       clearTimeout(expiryTimer);
       recorder?.stop();
       jump.stop();
+      rotate.stop();
       root.remove();
     },
   };
