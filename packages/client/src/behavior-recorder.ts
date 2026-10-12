@@ -18,6 +18,12 @@ export interface BehaviorRecorderOptions {
    * which is turned with the arrow keys; none for slide_puzzle and animal_jump.
    */
   input?: HTMLElement | null | undefined;
+  /**
+   * Also records where the pointer goes down anywhere on the page, not only on the widget, still
+   * measured from the widget: for auto_check, where the visitor never touches the widget. Moves
+   * are recorded anywhere either way.
+   */
+  page?: boolean | undefined;
 }
 
 export interface BehaviorRecorder {
@@ -34,7 +40,7 @@ export interface BehaviorRecorder {
  * the challenge goes. Shared by renderWidget and <WauCaptcha /> from @wau-captcha/react; nothing
  * leaves the page until a snapshot is sent with an answer.
  */
-export function recordBehavior({ root, input }: BehaviorRecorderOptions): BehaviorRecorder {
+export function recordBehavior({ root, input, page = false }: BehaviorRecorderOptions): BehaviorRecorder {
   const start = performance.now();
   const pointer: Behavior["pointer"] = [];
   const keyTimes: number[] = [];
@@ -89,7 +95,8 @@ export function recordBehavior({ root, input }: BehaviorRecorderOptions): Behavi
   }
 
   document.addEventListener("pointermove", sample, { passive: true, capture: true });
-  root.addEventListener("pointerdown", sample, { passive: true, capture: true });
+  if (page) document.addEventListener("pointerdown", sample, { passive: true, capture: true });
+  else root.addEventListener("pointerdown", sample, { passive: true, capture: true });
   for (const type of CHECKED_EVENTS) root.addEventListener(type, check, true);
   // Before the widget's own handlers, so that the key that sends the answer is in it too.
   input?.addEventListener("keydown", key, true);
@@ -117,7 +124,8 @@ export function recordBehavior({ root, input }: BehaviorRecorderOptions): Behavi
     },
     stop() {
       document.removeEventListener("pointermove", sample, { capture: true });
-      root.removeEventListener("pointerdown", sample, { capture: true });
+      if (page) document.removeEventListener("pointerdown", sample, { capture: true });
+      else root.removeEventListener("pointerdown", sample, { capture: true });
       for (const type of CHECKED_EVENTS) root.removeEventListener(type, check, true);
       input?.removeEventListener("keydown", key, true);
       input?.removeEventListener("input", typed);

@@ -27,6 +27,10 @@ export interface WidgetLabels {
   rotateRight: string;
   /** object_rotate: the button that ends a round on the frame on screen. */
   rotateDone: string;
+  /** auto_check: the box while it checks the visitor. */
+  autoChecking: string;
+  /** auto_check: under the challenge it falls back to when the check did not let the visitor through. */
+  autoFallback: string;
 }
 
 export const DEFAULT_LABELS: WidgetLabels = {
@@ -49,6 +53,8 @@ export const DEFAULT_LABELS: WidgetLabels = {
   rotateLeft: "Rotate left",
   rotateRight: "Rotate right",
   rotateDone: "Done",
+  autoChecking: "Checking that you are human…",
+  autoFallback: "One more step: please solve this challenge.",
 };
 
 /** The same texts in Vietnamese: pass them as `labels`, or set data-lang="vi" on the element. */
@@ -72,6 +78,8 @@ export const VI_LABELS: WidgetLabels = {
   rotateLeft: "Xoay trái",
   rotateRight: "Xoay phải",
   rotateDone: "Xong",
+  autoChecking: "Đang kiểm tra bạn là người…",
+  autoFallback: "Cần thêm một bước: hãy giải captcha này.",
 };
 
 /** labels.rateLimited with the seconds filled in; a minute when the reply named none. */

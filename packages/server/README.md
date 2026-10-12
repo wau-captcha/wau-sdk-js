@@ -8,7 +8,7 @@ npm install @wau-captcha/server
 ```
 
 ```js
-import { BehaviorVerdict, WauCaptchaServer } from "@wau-captcha/server";
+import { BehaviorVerdict, ChallengeType, WauCaptchaServer } from "@wau-captcha/server";
 
 const wau = new WauCaptchaServer({
   secretKey: process.env.WAU_SECRET_KEY,
@@ -19,9 +19,20 @@ const result = await wau.verifyToken(token);
 if (!result.success) {
   // unknown, expired, already used, or issued for another key
 } else {
-  result.challengeType; // "image_distort", "motion_noise", "slide_puzzle", "animal_jump" or "object_rotate"
+  result.challengeType; // "image_distort", "motion_noise", "slide_puzzle", "animal_jump", "object_rotate" or "auto_check"
   result.hostname; // the website the challenge was solved on: compare it with yours
   result.behavior; // { verdict, score, reasons }: refuse not_measured, decide about suspicious
+}
+```
+
+`challengeType` is `"auto_check"` when the visitor passed auto_check without being shown a puzzle: the browser
+and the behaviour in it looked like a person's. A visitor it was unsure of solved a challenge of its fallback type,
+which `challengeType` then names. A determined bot driving a real browser can pass the automatic check, so for
+sign-ups, logins or payments require `behavior.score` at or above a threshold of your own:
+
+```js
+if (result.challengeType === ChallengeType.AUTO_CHECK && (result.behavior.score ?? 0) < 0.9) {
+  // ask for more, e.g. a code sent by e-mail
 }
 ```
 

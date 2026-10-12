@@ -1,6 +1,8 @@
 import {
+  type AutoProbe,
   type Behavior,
   type Challenge,
+  ChallengeType,
   ErrorCode,
   type JumpClick,
   type RotateRound,
@@ -28,12 +30,20 @@ export type CaptchaStatus = (typeof CaptchaStatus)[keyof typeof CaptchaStatus];
 export const CaptchaNotice = {
   WRONG_ANSWER: "wrong_answer",
   EXPIRED: "expired",
+  /** auto_check did not let the visitor through: a challenge of its fallback type took its place. */
+  FALLBACK: "fallback",
 } as const;
 
 export type CaptchaNotice = (typeof CaptchaNotice)[keyof typeof CaptchaNotice];
 
 export type CaptchaOptions = Omit<WauCaptchaClientOptions, "fetch"> & {
-  /** Load a challenge right away and again when the token expires, instead of waiting for load(). */
+  /** auto_check only: the type it falls back to, as WauCaptchaProps.fallbackChallengeType. */
+  fallbackChallengeType?: ChallengeType | undefined;
+  /**
+   * Load a challenge right away and again when the token expires, instead of waiting for load().
+   * auto_check is never eager: the panel loads it once it is in view, and after its token expired
+   * on the visitor's next action.
+   */
   eager: boolean;
   onSuccess?: ((token: string) => void) | undefined;
   onExpire?: (() => void) | undefined;
@@ -51,6 +61,11 @@ export type CaptchaState = {
 };
 
 export type Captcha = CaptchaState & {
+  /**
+   * auto_check only: the type it fell back to, which every challenge is of until the token of the
+   * visitor expires; null while auto_check runs.
+   */
+  fallback: ChallengeType | null;
   /** Loads a new challenge, keeping `notice` on screen. */
   load: (notice?: CaptchaNotice | null) => Promise<void>;
   /** Submits an answer, with how the person behaved while the challenge was on screen. */
@@ -61,6 +76,13 @@ export type Captcha = CaptchaState & {
   verifyJump: (challengeId: string, clicks: JumpClick[], behavior?: Behavior) => Promise<void>;
   /** Submits the presses of an object_rotate challenge, one round each, like verify. */
   verifyRotate: (challengeId: string, rounds: RotateRound[], behavior?: Behavior) => Promise<void>;
+  /**
+   * Submits what probeBrowser found for an auto_check challenge, like verify. When the check does
+   * not let the visitor through, a challenge of the challenge's fallbackType is loaded instead.
+   */
+  verifyAuto: (challenge: Challenge, probe: AutoProbe, behavior?: Behavior) => Promise<void>;
+  /** Resolves once the proof of work of a challenge is done, as WauCaptchaClient.workDone. */
+  workDone: (challengeId: string) => Promise<void>;
 };
 
 const INITIAL_STATE: CaptchaState = {
@@ -73,12 +95,15 @@ const INITIAL_STATE: CaptchaState = {
 };
 
 /** The state of one captcha: its challenge, the answer being checked and the token it earned. */
-export function useCaptcha({ siteKey, baseUrl, challengeType, timeoutMs, eager, ...callbacks }: CaptchaOptions): Captcha {
+export function useCaptcha({ siteKey, baseUrl, challengeType, fallbackChallengeType, timeoutMs, eager, ...callbacks }: CaptchaOptions): Captcha {
   const client = useMemo(
     () => new WauCaptchaClient({ siteKey, baseUrl, challengeType, timeoutMs }),
     [siteKey, baseUrl, challengeType, timeoutMs],
   );
   const [state, setState] = useState(INITIAL_STATE);
+  // The type auto_check fell back to: the ref for the next load, the state for the panel.
+  const [fallback, setFallback] = useState<ChallengeType | null>(null);
+  const fallbackRef = useRef<ChallengeType | null>(null);
   const requestRef = useRef<AbortController | null>(null);
   // The latest callbacks, so passing new functions on every render reloads nothing.
   const callbacksRef = useRef(callbacks);
@@ -104,35 +129,59 @@ export function useCaptcha({ siteKey, baseUrl, challengeType, timeoutMs, eager, 
       const signal = startRequest();
       setState({ ...INITIAL_STATE, status: CaptchaStatus.LOADING, notice });
       try {
-        const challenge = await client.newChallenge({ signal });
+        const challenge = await client.newChallenge({
+          challengeType: fallbackRef.current ?? undefined,
+          fallbackType: fallbackChallengeType ?? ChallengeType.SLIDE_PUZZLE,
+          signal,
+        });
         if (!signal.aborted) setState({ ...INITIAL_STATE, status: CaptchaStatus.READY, notice, challenge });
       } catch (error) {
         if (!signal.aborted) fail(error);
       }
     },
-    [client, startRequest, fail],
+    [client, fallbackChallengeType, startRequest, fail],
   );
 
-  /** Sends the answer `send` makes: the text typed, the drag of the slider, the clicks or the presses of the rounds. */
+  /** auto_check did not let the visitor through: every challenge is of `type` from now on, until the token expires. */
+  const fallBack = useCallback(
+    (type: ChallengeType | "" | undefined) => {
+      if (!type || type === ChallengeType.AUTO_CHECK) {
+        return fail(new WauCaptchaError(ErrorCode.CHALLENGE_TYPE_NOT_ALLOWED, "the site key allows no challenge type for auto_check to fall back to"));
+      }
+      fallbackRef.current = type;
+      setFallback(type);
+      void load(CaptchaNotice.FALLBACK);
+    },
+    [fail, load],
+  );
+
+  /**
+   * Sends the answer `send` makes: the text typed, the drag of the slider, the clicks or the presses
+   * of the rounds, or what auto_check found, `auto` being its challenge.
+   */
   const submit = useCallback(
-    async (send: (signal: AbortSignal) => Promise<VerifyResult>) => {
+    async (send: (signal: AbortSignal) => Promise<VerifyResult>, auto?: Challenge) => {
       const signal = startRequest();
       setState((current) => ({ ...current, status: CaptchaStatus.CHECKING }));
       try {
         const result = await send(signal);
         if (signal.aborted) return;
-        // A challenge can be answered once, so a wrong answer needs a new one.
-        if (!result.success) return void load(CaptchaNotice.WRONG_ANSWER);
+        // A challenge can be answered once, so a wrong answer needs a new one; auto_check falls back instead.
+        if (!result.success) return void (auto ? fallBack(auto.fallbackType) : load(CaptchaNotice.WRONG_ANSWER));
         setState({ ...INITIAL_STATE, status: CaptchaStatus.VERIFIED, token: result.token, tokenExpiresAt: result.expiresAt });
         callbacksRef.current.onSuccess?.(result.token);
       } catch (error) {
         if (signal.aborted) return;
-        // The challenge expired while it was on screen: show a fresh one.
-        if (error instanceof WauCaptchaError && error.code === ErrorCode.CHALLENGE_NOT_FOUND) return void load(CaptchaNotice.EXPIRED);
+        if (error instanceof WauCaptchaError && error.code === ErrorCode.CHALLENGE_NOT_FOUND) {
+          // The challenge expired while it was on screen: show a fresh one. auto_check, as in a tab put
+          // to sleep, checks again on the visitor's next action.
+          if (auto) return setState({ ...INITIAL_STATE, notice: CaptchaNotice.EXPIRED });
+          return void load(CaptchaNotice.EXPIRED);
+        }
         fail(error);
       }
     },
-    [startRequest, load, fail],
+    [startRequest, load, fallBack, fail],
   );
 
   const verify = useCallback(
@@ -158,6 +207,14 @@ export function useCaptcha({ siteKey, baseUrl, challengeType, timeoutMs, eager, 
     [client, submit],
   );
 
+  const verifyAuto = useCallback(
+    (challenge: Challenge, probe: AutoProbe, behavior?: Behavior) =>
+      submit((signal) => client.verifyAuto(challenge.id, probe, { signal, behavior }), challenge),
+    [client, submit],
+  );
+
+  const workDone = useCallback((challengeId: string) => client.workDone(challengeId), [client]);
+
   useEffect(() => {
     if (eager) void load();
     return () => requestRef.current?.abort();
@@ -167,11 +224,14 @@ export function useCaptcha({ siteKey, baseUrl, challengeType, timeoutMs, eager, 
     if (!state.tokenExpiresAt) return;
     const timer = setTimeout(() => {
       callbacksRef.current.onExpire?.();
+      // auto_check checks again before anything else: its fallback ends with the token.
+      fallbackRef.current = null;
+      setFallback(null);
       if (eager) void load(CaptchaNotice.EXPIRED);
       else setState({ ...INITIAL_STATE, notice: CaptchaNotice.EXPIRED });
     }, Math.max(0, state.tokenExpiresAt.getTime() - Date.now()));
     return () => clearTimeout(timer);
   }, [state.tokenExpiresAt, eager, load]);
 
-  return { ...state, load, verify, verifySlide, verifyJump, verifyRotate };
+  return { ...state, fallback, load, verify, verifySlide, verifyJump, verifyRotate, verifyAuto, workDone };
 }
