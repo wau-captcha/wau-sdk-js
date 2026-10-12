@@ -27,7 +27,7 @@ with its integrity hash:
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@wau-captcha/client@1.4.0/dist/wau-captcha.global.js"
+  src="https://cdn.jsdelivr.net/npm/@wau-captcha/client@1.5.0/dist/wau-captcha.global.js"
   integrity="sha384-…"
   crossorigin="anonymous"></script>
 <div data-wau-captcha data-site-key="pk_…" data-base-url="https://api.waucaptcha.com" data-lang="vi"></div>
@@ -44,11 +44,18 @@ const challenge = await captcha.newChallenge();
 const result = await captcha.verify(challenge.id, answer, { behavior });
 ```
 
-The challenge types are `ChallengeType.IMAGE_DISTORT` (the default), `MOTION_NOISE`, `SLIDE_PUZZLE` and
-`ANIMAL_JUMP`. For slide_puzzle and animal_jump, `trackSlide` and `trackJump` record the drag and the clicks the
-way the service checks them, and `verifySlide` and `verifyJump` send them. Both need a pointer, so keyboard-only
-users cannot solve them: where accessibility matters, keep `IMAGE_DISTORT` available. animal_jump plays each
-round from a `blob:` URL: a Content-Security-Policy that limits `img-src` must allow `blob:` as well as `data:`.
+The challenge types are `ChallengeType.IMAGE_DISTORT` (the default), `MOTION_NOISE`, `SLIDE_PUZZLE`,
+`ANIMAL_JUMP` and `OBJECT_ROTATE`. For slide_puzzle and animal_jump, `trackSlide` and `trackJump` record the drag
+and the clicks the way the service checks them, and `verifySlide` and `verifyJump` send them. Both need a pointer,
+so keyboard-only users cannot solve them: where accessibility matters, keep `IMAGE_DISTORT` available. animal_jump
+plays each round from a `blob:` URL: a Content-Security-Policy that limits `img-src` must allow `blob:` as well as
+`data:`.
+
+object_rotate shows two rounds, each a strip of `challenge.frameCount` frames of `width` × `height` side by side
+(`imageUrl`, then `secondImage`): an object beside an arrow on the ground, which the person turns a frame at a time
+until it faces the arrow. `trackRotate` shows a frame of the strip as the background of an element, takes Rotate
+left, Rotate right and Done, and records the presses the way the service checks them; `verifyRotate` sends them. It
+works with a pointer or the keyboard (the arrow keys and Enter), but needs sight.
 
 From 1.3.0 the client sends the site key with every answer, so an answer only counts for the
 key whose challenge it solves, and it solves the proof of work each challenge asks for: in the

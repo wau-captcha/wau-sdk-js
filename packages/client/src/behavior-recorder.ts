@@ -13,8 +13,11 @@ const CHECKED_EVENTS = ["pointerdown", "pointerup", "click", "keydown", "keyup",
 export interface BehaviorRecorderOptions {
   /** The widget: positions are measured from its top-left corner, and events on it are checked. */
   root: HTMLElement;
-  /** The answer box of a text challenge; none for slide_puzzle. */
-  input?: HTMLInputElement | null | undefined;
+  /**
+   * Where key presses are timed: the answer box of a text challenge, the widget for object_rotate,
+   * which is turned with the arrow keys; none for slide_puzzle and animal_jump.
+   */
+  input?: HTMLElement | null | undefined;
 }
 
 export interface BehaviorRecorder {
@@ -88,7 +91,8 @@ export function recordBehavior({ root, input }: BehaviorRecorderOptions): Behavi
   document.addEventListener("pointermove", sample, { passive: true, capture: true });
   root.addEventListener("pointerdown", sample, { passive: true, capture: true });
   for (const type of CHECKED_EVENTS) root.addEventListener(type, check, true);
-  input?.addEventListener("keydown", key);
+  // Before the widget's own handlers, so that the key that sends the answer is in it too.
+  input?.addEventListener("keydown", key, true);
   input?.addEventListener("input", typed);
   input?.addEventListener("paste", pasted);
   document.addEventListener("visibilitychange", visibility);
@@ -115,7 +119,7 @@ export function recordBehavior({ root, input }: BehaviorRecorderOptions): Behavi
       document.removeEventListener("pointermove", sample, { capture: true });
       root.removeEventListener("pointerdown", sample, { capture: true });
       for (const type of CHECKED_EVENTS) root.removeEventListener(type, check, true);
-      input?.removeEventListener("keydown", key);
+      input?.removeEventListener("keydown", key, true);
       input?.removeEventListener("input", typed);
       input?.removeEventListener("paste", pasted);
       document.removeEventListener("visibilitychange", visibility);

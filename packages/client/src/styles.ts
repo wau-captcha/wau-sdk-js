@@ -44,6 +44,12 @@ font-size:12px;font-weight:500;line-height:18px;pointer-events:none}
 .wau-captcha__ring{position:absolute;box-sizing:border-box;width:24px;height:24px;border:2px solid #fff;border-radius:50%;
 box-shadow:0 0 0 2px var(--_primary);transform:translate(-50%,-50%);pointer-events:none}
 .wau-captcha__jump-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:500;line-height:1.25}
+.wau-captcha__task{margin:0;font-weight:500;line-height:1.25}
+.wau-captcha__rotate{position:relative;overflow:hidden;border-radius:6px;background:var(--_muted);user-select:none;-webkit-user-select:none}
+.wau-captcha__rotate-frame{position:absolute;inset:0;border-radius:6px;background-repeat:no-repeat;outline:none}
+.wau-captcha__rotate-frame:focus-visible{box-shadow:inset 0 0 0 2px var(--_primary)}
+.wau-captcha__rotate-bar{display:flex;gap:8px}
+.wau-captcha__turn{font-size:20px;line-height:1}
 .wau-captcha__field{display:grid;gap:6px;font-weight:500}
 .wau-captcha__input{box-sizing:border-box;width:100%;height:40px;margin:0;padding:0 12px;border:1px solid var(--_border);border-radius:6px;
 background:transparent;color:inherit;font:inherit;font-weight:450;outline:none;transition:border-color .15s,box-shadow .15s,opacity .15s}

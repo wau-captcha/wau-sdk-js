@@ -2,6 +2,31 @@
 
 Every release of the three packages, newest first. Versions follow [Semantic Versioning](https://semver.org/).
 
+## @wau-captcha/client 1.5.0
+
+- A new challenge type, `ChallengeType.OBJECT_ROTATE` (`object_rotate`): in each of two rounds an object stands beside
+  an arrow on the ground, and the person turns it a frame at a time until it faces the arrow, then presses Done. The
+  widget shows the task above the image, a `1/2`, `2/2` counter, and Rotate left (↺), Rotate right (↻) and Done; on
+  the focused image ArrowLeft and ArrowRight turn the object and Enter is Done. Done waits for a first press, presses
+  past 24 a round are ignored, and nothing is said between the rounds. It works with a pointer or the keyboard, and
+  the key presses count in the behaviour data; it needs sight.
+- `Challenge.frameCount` (from `frame_count`): `imageUrl` and `secondImage` are each a strip of that many frames side
+  by side. `verifyRotate(challengeId, rounds, options)` with the `RotateRound` and `RotatePress` types, and
+  `trackRotate`, which shows the frames and records the presses for your own UI.
+- New labels `rotatePrompt`, `rotateLeft`, `rotateRight` and `rotateDone`, in English (`DEFAULT_LABELS`) and
+  Vietnamese (`VI_LABELS`).
+- `recordBehavior`'s `input` takes any element whose key presses are timed, not only an `<input>`.
+
+## @wau-captcha/server 1.5.0
+
+- `ChallengeType.OBJECT_ROTATE`: `verifyToken` returns `challengeType: "object_rotate"` for the tokens of that type.
+
+## @wau-captcha/react 1.4.0
+
+- Depends on `@wau-captcha/client` ^1.5.0. `<WauCaptcha challengeType={ChallengeType.OBJECT_ROTATE} />` shows the two
+  rounds with Rotate left, Rotate right and Done, which turns into the spinner while the answer is checked. The labels
+  gain `rotatePrompt`, `rotateLeft`, `rotateRight` and `rotateDone`.
+
 ## @wau-captcha/client 1.4.0
 
 - A new challenge type, `ChallengeType.ANIMAL_JUMP` (`animal_jump`): two rounds of 2 s in which five animal heads jump;

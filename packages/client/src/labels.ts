@@ -20,6 +20,13 @@ export interface WidgetLabels {
   jumpPrompt: string;
   /** animal_jump: the button that plays the round again, and its aria-label. */
   replay: string;
+  /** object_rotate: the task, above the image. */
+  rotatePrompt: string;
+  /** object_rotate: the aria-labels and tooltips of the buttons that turn the object a frame. */
+  rotateLeft: string;
+  rotateRight: string;
+  /** object_rotate: the button that ends a round on the frame on screen. */
+  rotateDone: string;
 }
 
 export const DEFAULT_LABELS: WidgetLabels = {
@@ -38,6 +45,10 @@ export const DEFAULT_LABELS: WidgetLabels = {
   sliderHandle: "Slider",
   jumpPrompt: "Click the animal that jumps highest",
   replay: "Replay",
+  rotatePrompt: "Turn the object to face the arrow",
+  rotateLeft: "Rotate left",
+  rotateRight: "Rotate right",
+  rotateDone: "Done",
 };
 
 /** The same texts in Vietnamese: pass them as `labels`, or set data-lang="vi" on the element. */
@@ -57,6 +68,10 @@ export const VI_LABELS: WidgetLabels = {
   sliderHandle: "Thanh trượt",
   jumpPrompt: "Bấm vào con vật nhảy cao nhất",
   replay: "Xem lại",
+  rotatePrompt: "Xoay vật thể cho mặt trước hướng theo mũi tên",
+  rotateLeft: "Xoay trái",
+  rotateRight: "Xoay phải",
+  rotateDone: "Xong",
 };
 
 /** labels.rateLimited with the seconds filled in; a minute when the reply named none. */

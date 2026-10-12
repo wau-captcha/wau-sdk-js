@@ -26,8 +26,10 @@ redeems it with [`@wau-captcha/server`](https://www.npmjs.com/package/@wau-captc
 Props: `mode` (`WauCaptchaMode.INLINE` or `MODAL`), `challengeType`, `theme`, `inputName`,
 `labels` (e.g. `VI_LABELS` for Vietnamese), `onSuccess`, `onExpire`, `onError`.
 
-`challengeType` is `ChallengeType.IMAGE_DISTORT` (the default), `MOTION_NOISE`, `SLIDE_PUZZLE` or `ANIMAL_JUMP`.
-The last two need a pointer, so keep `IMAGE_DISTORT` where keyboard-only users must get through; animal_jump
-plays its rounds from `blob:` URLs, which a Content-Security-Policy must allow in `img-src`.
+`challengeType` is `ChallengeType.IMAGE_DISTORT` (the default), `MOTION_NOISE`, `SLIDE_PUZZLE`, `ANIMAL_JUMP` or
+`OBJECT_ROTATE`. `SLIDE_PUZZLE` and `ANIMAL_JUMP` need a pointer, so keep `IMAGE_DISTORT` where keyboard-only users
+must get through; animal_jump plays its rounds from `blob:` URLs, which a Content-Security-Policy must allow in
+`img-src`. `OBJECT_ROTATE` asks to turn an object until it faces an arrow, in two rounds, with Rotate left, Rotate
+right and Done or with the arrow keys and Enter; it works without a pointer, but needs sight.
 
 Documentation: https://waucaptcha.com/docs · Changes: [CHANGELOG.md](https://github.com/wau-captcha/wau-sdk-js/blob/main/CHANGELOG.md) · License: MIT

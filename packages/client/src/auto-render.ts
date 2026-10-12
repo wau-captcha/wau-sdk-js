@@ -5,7 +5,7 @@ import { renderWidget, type WidgetHandle } from "./widget.js";
 /**
  * Renders a widget into every element carrying data-wau-captcha, reading its options from
  * data attributes: data-site-key, data-base-url and optionally data-challenge-type (a ChallengeType:
- * image_distort, motion_noise, slide_puzzle or animal_jump), data-input-name and data-lang ("vi"
+ * image_distort, motion_noise, slide_puzzle, animal_jump or object_rotate), data-input-name and data-lang ("vi"
  * for Vietnamese texts, English otherwise). Elements already rendered are skipped.
  */
 export function autoRender(scope: ParentNode = document): WidgetHandle[] {
