@@ -1,6 +1,6 @@
 {
   "name": "@wau-captcha/client",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Browser SDK for WAU Captcha: fetch and answer challenges, or drop in a ready-made widget.",
   "license": "MIT",
   "author": "WAU Captcha",

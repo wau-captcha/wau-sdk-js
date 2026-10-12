@@ -2,6 +2,45 @@
 
 Every release of the three packages, newest first. Versions follow [Semantic Versioning](https://semver.org/).
 
+## @wau-captcha/client 1.6.0
+
+- A new challenge type, `ChallengeType.AUTO_CHECK` (`auto_check`), like Cloudflare Turnstile without its checkbox:
+  once the widget comes into view, a compact box says "Checking that you are human…" while the SDK solves a harder
+  proof of work, probes the browser and records the behaviour on the whole page; at least 1.5 s after the challenge
+  arrived it sends what it found. Most visitors then see "Verified" and get a token without doing anything. A visitor
+  the service is unsure of is never told why: a challenge of the fallback type takes the place of the box ("One more
+  step: please solve this challenge.") and every challenge after it is of that type until the visitor passes. Without
+  a type to fall back to, the widget reports `CHALLENGE_TYPE_NOT_ALLOWED`. When its token expires unused, auto_check
+  checks again on the visitor's next click, key press or focus in the page, never by itself, since every pass counts
+  against the key.
+- Widget options `fallbackChallengeType` (default `SLIDE_PUZZLE`; `IMAGE_DISTORT` where keyboard-only visitors
+  matter) and `appearance`: `Appearance.ALWAYS` (default) or `Appearance.INTERACTION_ONLY`, which keeps the widget
+  hidden while it checks and once it passed. The `<script>` build reads them from `data-fallback-type` and
+  `data-appearance`.
+- `newChallenge` takes `fallbackType`, sent as `fallback_type` for auto_check only, and `Challenge.fallbackType`
+  (from `fallback_type`) names the type the service chose; a challenge without an image has `imageUrl: ""`.
+  `verifyAuto(challengeId, probe, options)` sends the `AutoProbe` that `probeBrowser()` gathers: `navigator.userAgent`
+  (512 characters at most), `navigator.language` and the names of the checks that tripped, out of `patched_natives`,
+  `outer_zero`, `software_gl`, `notification_mismatch`, `touch_mismatch`, `no_hardware` and `no_plugins`. No
+  fingerprint, canvas or WebGL output, fonts or plugins leave the page. `workDone(challengeId)` resolves once the
+  proof of work of a challenge is done.
+- `recordBehavior` takes `page: true`, which records the presses of the pointer anywhere on the page, still measured
+  from the widget.
+- New labels `autoChecking` and `autoFallback`, in English (`DEFAULT_LABELS`) and Vietnamese (`VI_LABELS`).
+
+## @wau-captcha/server 1.6.0
+
+- `ChallengeType.AUTO_CHECK`: `verifyToken` returns `challengeType: "auto_check"` for a visitor who passed without a
+  puzzle, and the fallback's type for one who solved the fallback. For sign-ups, logins or payments, require
+  `behavior.score` at or above a threshold of your own.
+
+## @wau-captcha/react 1.5.0
+
+- Depends on `@wau-captcha/client` ^1.6.0. `<WauCaptcha challengeType={ChallengeType.AUTO_CHECK} />` shows the
+  compact box once it is in view, then the panel of the fallback type if the check does not pass, with the new props
+  `fallbackChallengeType` and `appearance`; `Appearance` is exported. auto_check always runs inline, also in `MODAL`
+  mode. The labels gain `autoChecking` and `autoFallback`.
+
 ## @wau-captcha/client 1.5.0
 
 - A new challenge type, `ChallengeType.OBJECT_ROTATE` (`object_rotate`): in each of two rounds an object stands beside

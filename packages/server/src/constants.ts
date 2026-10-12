@@ -4,9 +4,15 @@
  * a puzzle piece into its hole and checks that the drag moved like a hand; ANIMAL_JUMP plays two
  * rounds of 2 s in which five animal heads jump, and asks to click, in each, the one that jumps
  * highest; OBJECT_ROTATE shows, in each of two rounds, an object beside an arrow on the ground and
- * asks to turn the object a step at a time until it faces the arrow. SLIDE_PUZZLE and ANIMAL_JUMP
- * need a pointer, so keyboard-only users cannot solve them; OBJECT_ROTATE works with a pointer or
- * the keyboard, but needs sight. Where accessibility matters, keep IMAGE_DISTORT available as well.
+ * asks to turn the object a step at a time until it faces the arrow; AUTO_CHECK shows nothing to
+ * solve: it checks the browser and the behaviour in it, and shows a challenge of its fallback type
+ * only when it is unsure. A token of AUTO_CHECK means the visitor passed without a puzzle; one who
+ * solved the fallback has a token of the fallback's type. SLIDE_PUZZLE and ANIMAL_JUMP need a
+ * pointer, so keyboard-only users cannot solve them; OBJECT_ROTATE works with a pointer or the
+ * keyboard, but needs sight. AUTO_CHECK needs no action from most visitors and shows the fallback
+ * type to the rest, so it is as accessible as its fallback: choose IMAGE_DISTORT as the fallback
+ * where keyboard-only visitors matter. Where accessibility matters, keep IMAGE_DISTORT available as
+ * well.
  */
 export const ChallengeType = {
   IMAGE_DISTORT: "image_distort",
@@ -14,6 +20,7 @@ export const ChallengeType = {
   SLIDE_PUZZLE: "slide_puzzle",
   ANIMAL_JUMP: "animal_jump",
   OBJECT_ROTATE: "object_rotate",
+  AUTO_CHECK: "auto_check",
 } as const;
 
 export type ChallengeType = (typeof ChallengeType)[keyof typeof ChallengeType];

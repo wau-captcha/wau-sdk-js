@@ -1,6 +1,6 @@
 "use client";
 
-import { ChallengeType, type WauCaptchaError } from "@wau-captcha/client";
+import { Appearance, ChallengeType, type WauCaptchaError } from "@wau-captcha/client";
 import { useState } from "react";
 import { CaptchaDialog } from "./captcha-dialog.js";
 import { CaptchaStyles } from "./captcha-styles.js";
@@ -15,10 +15,25 @@ export type WauCaptchaProps = {
   siteKey: string;
   /** Address of the WAU Captcha gateway, e.g. https://captcha.example.com. */
   baseUrl: string;
-  /** INLINE (default) shows the challenge in place; MODAL shows a button that opens it in a dialog. */
+  /**
+   * INLINE (default) shows the challenge in place; MODAL shows a button that opens it in a dialog.
+   * ChallengeType.AUTO_CHECK always runs inline, MODAL or not: most visitors have nothing to open.
+   */
   mode?: WauCaptchaMode | undefined;
   /** Default ChallengeType.IMAGE_DISTORT. */
   challengeType?: ChallengeType | undefined;
+  /**
+   * ChallengeType.AUTO_CHECK only: the type to show when the check does not let the visitor
+   * through; the service may pick another the key allows. Default ChallengeType.SLIDE_PUZZLE;
+   * IMAGE_DISTORT where keyboard-only visitors matter.
+   */
+  fallbackChallengeType?: ChallengeType | undefined;
+  /**
+   * ChallengeType.AUTO_CHECK only: Appearance.ALWAYS (default) shows the box from the start;
+   * Appearance.INTERACTION_ONLY keeps the captcha hidden while it checks and once it passed, and
+   * shows it only for the fallback challenge or an error.
+   */
+  appearance?: Appearance | undefined;
   /** Default WauCaptchaTheme.AUTO, which follows the color-scheme of the page. */
   theme?: WauCaptchaTheme | undefined;
   /** Name of the hidden input that carries the token in the surrounding form. Default "wau-captcha-token". */
@@ -28,7 +43,10 @@ export type WauCaptchaProps = {
   timeoutMs?: number | undefined;
   /** Called with the token of a correct answer; your backend redeems it with @wau-captcha/server. */
   onSuccess?: ((token: string) => void) | undefined;
-  /** Called when the token expires unused. INLINE starts over by itself; MODAL waits for the button. */
+  /**
+   * Called when the token expires unused. INLINE starts over by itself; MODAL waits for the button;
+   * AUTO_CHECK checks again on the visitor's next action in the page.
+   */
   onExpire?: (() => void) | undefined;
   onError?: ((error: WauCaptchaError) => void) | undefined;
   className?: string | undefined;
@@ -42,6 +60,7 @@ export type WauCaptchaProps = {
 export function WauCaptcha({
   mode = WauCaptchaMode.INLINE,
   challengeType = ChallengeType.IMAGE_DISTORT,
+  appearance = Appearance.ALWAYS,
   theme = WauCaptchaTheme.AUTO,
   inputName = "wau-captcha-token",
   labels: customLabels,
@@ -49,8 +68,10 @@ export function WauCaptcha({
   ...options
 }: WauCaptchaProps) {
   const labels = { ...DEFAULT_LABELS, ...customLabels };
-  const modal = mode === WauCaptchaMode.MODAL;
-  const captcha = useCaptcha({ ...options, challengeType, eager: !modal });
+  // auto_check starts once it is in view, not when it mounts, and never in a dialog.
+  const automatic = challengeType === ChallengeType.AUTO_CHECK;
+  const modal = mode === WauCaptchaMode.MODAL && !automatic;
+  const captcha = useCaptcha({ ...options, challengeType, eager: !modal && !automatic });
   const [open, setOpen] = useState(false);
   const verified = captcha.status === CaptchaStatus.VERIFIED;
 
@@ -64,10 +85,14 @@ export function WauCaptcha({
     setOpen(true);
   }
 
-  const panel = <ChallengePanel captcha={captcha} labels={labels} challengeType={challengeType} />;
+  const panel = <ChallengePanel captcha={captcha} labels={labels} challengeType={challengeType} appearance={appearance} />;
 
   return (
-    <div className={className ? `wau-captcha ${className}` : "wau-captcha"} data-mode={mode} data-theme={theme}>
+    <div
+      className={className ? `wau-captcha ${className}` : "wau-captcha"}
+      data-mode={modal ? WauCaptchaMode.MODAL : WauCaptchaMode.INLINE}
+      data-theme={theme}
+    >
       <CaptchaStyles />
       {modal ? (
         <>

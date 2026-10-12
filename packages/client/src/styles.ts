@@ -50,6 +50,16 @@ box-shadow:0 0 0 2px var(--_primary);transform:translate(-50%,-50%);pointer-even
 .wau-captcha__rotate-frame:focus-visible{box-shadow:inset 0 0 0 2px var(--_primary)}
 .wau-captcha__rotate-bar{display:flex;gap:8px}
 .wau-captcha__turn{font-size:20px;line-height:1}
+.wau-captcha__auto{display:flex;align-items:center;gap:10px;min-height:38px;line-height:1.25}
+.wau-captcha__auto>.wau-captcha__icon{width:22px;height:22px;color:var(--_primary)}
+.wau-captcha__auto[data-tone=positive]{color:var(--_positive);font-weight:500}
+.wau-captcha__auto[data-tone=positive]>.wau-captcha__icon{color:inherit}
+.wau-captcha__auto-text{flex:1;min-width:0}
+.wau-captcha__mark{display:grid;justify-items:center;gap:3px;flex-shrink:0;color:var(--_muted-foreground);font-size:10px;font-weight:600;
+line-height:1;white-space:nowrap}
+.wau-captcha__mark-tile{display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;
+background:var(--_primary);color:var(--_primary-foreground)}
+.wau-captcha__mark-tile .wau-captcha__icon{width:12px;height:12px}
 .wau-captcha__field{display:grid;gap:6px;font-weight:500}
 .wau-captcha__input{box-sizing:border-box;width:100%;height:40px;margin:0;padding:0 12px;border:1px solid var(--_border);border-radius:6px;
 background:transparent;color:inherit;font:inherit;font-weight:450;outline:none;transition:border-color .15s,box-shadow .15s,opacity .15s}

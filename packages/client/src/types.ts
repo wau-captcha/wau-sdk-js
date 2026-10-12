@@ -4,11 +4,11 @@ export interface Challenge {
   /** Pass it to verify together with the answer. */
   id: string;
   type: ChallengeType;
-  /** A data: URL, ready for an <img> src. */
+  /** A data: URL, ready for an <img> src; "" for auto_check, which has no image. */
   imageUrl: string;
-  /** "image/png", "image/gif" or, for slide_puzzle and object_rotate, "image/jpeg". */
+  /** "image/png", "image/gif" or, for slide_puzzle and object_rotate, "image/jpeg"; "" for auto_check. */
   mimeType: string;
-  /** Size to display the image at, in CSS pixels; for object_rotate, the size of one frame. */
+  /** Size to display the image at, in CSS pixels; for object_rotate, the size of one frame; 0 for auto_check. */
   width: number;
   height: number;
   /** After this the challenge can no longer be answered. */
@@ -29,6 +29,11 @@ export interface Challenge {
    * by side, frame k the object turned k steps clockwise as seen from above.
    */
   frameCount?: number;
+  /**
+   * auto_check only: the type to load if the check does not let the visitor through, chosen by the
+   * service from what the key allows; "" when it allows none.
+   */
+  fallbackType?: ChallengeType | "";
   /**
    * The proof of work the service asks for: SHA-256(salt ‖ id ‖ nonce) must start with
    * `difficulty` zero bits. WauCaptchaClient solves it in the background as soon as the challenge
@@ -65,6 +70,13 @@ export type RotatePress = { ms: number; direction: 1 | -1 };
 export type RotateRound = { frame: number; presses: RotatePress[]; doneMs: number };
 
 /**
+ * What auto_check answers with, as probeBrowser gathers it: navigator.userAgent and
+ * navigator.language, which every request carries in its headers already, and the names of the
+ * browser probes that tripped, e.g. "outer_zero". Nothing else about the browser leaves the page.
+ */
+export type AutoProbe = { userAgent: string; language: string; findings: string[] };
+
+/**
  * How the person behaved while a challenge was on screen, as recordBehavior records it and the
  * service reads it: times in ms since the challenge was shown, x and y in CSS px from the top-left
  * corner of the widget. It never holds the keys pressed or anything from the page.
@@ -72,7 +84,10 @@ export type RotateRound = { frame: number; presses: RotatePress[]; doneMs: numbe
 export type Behavior = {
   version: 1;
   elapsed_ms: number;
-  /** Pointer moves (one per 16 ms at most) and the places it went down, the latest 200. */
+  /**
+   * Pointer moves (one per 16 ms at most) and the places it went down on the widget, or for
+   * auto_check anywhere on the page; the latest 200.
+   */
   pointer: Array<{ t: number; x: number; y: number }>;
   /** "mouse", "touch", "pen", or "" when no pointer was used. */
   pointer_type: string;

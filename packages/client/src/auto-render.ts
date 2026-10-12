@@ -1,12 +1,14 @@
-import type { ChallengeType } from "./constants.js";
+import type { Appearance, ChallengeType } from "./constants.js";
 import { VI_LABELS } from "./labels.js";
 import { renderWidget, type WidgetHandle } from "./widget.js";
 
 /**
  * Renders a widget into every element carrying data-wau-captcha, reading its options from
  * data attributes: data-site-key, data-base-url and optionally data-challenge-type (a ChallengeType:
- * image_distort, motion_noise, slide_puzzle, animal_jump or object_rotate), data-input-name and data-lang ("vi"
- * for Vietnamese texts, English otherwise). Elements already rendered are skipped.
+ * image_distort, motion_noise, slide_puzzle, animal_jump, object_rotate or auto_check),
+ * data-fallback-type and data-appearance ("always" or "interaction-only") for auto_check,
+ * data-input-name and data-lang ("vi" for Vietnamese texts, English otherwise). Elements already
+ * rendered are skipped.
  */
 export function autoRender(scope: ParentNode = document): WidgetHandle[] {
   const handles: WidgetHandle[] = [];
@@ -18,6 +20,8 @@ export function autoRender(scope: ParentNode = document): WidgetHandle[] {
         siteKey: host.dataset.siteKey ?? "",
         baseUrl: host.dataset.baseUrl ?? "",
         challengeType: host.dataset.challengeType as ChallengeType | undefined,
+        fallbackChallengeType: host.dataset.fallbackType as ChallengeType | undefined,
+        appearance: host.dataset.appearance as Appearance | undefined,
         inputName: host.dataset.inputName,
         labels: host.dataset.lang === "vi" ? VI_LABELS : undefined,
       }),
