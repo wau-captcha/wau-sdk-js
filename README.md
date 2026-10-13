@@ -10,7 +10,12 @@ server.
 | [`@wau-captcha/react`](packages/react) | `<WauCaptcha />` for React 18 or later, inline or in a modal. |
 | [`@wau-captcha/server`](packages/server) | Node.js 18+ SDK that redeems tokens with your secret key. |
 
-None of them has a runtime dependency; React is a peer dependency of `@wau-captcha/react`.
+`@wau-captcha/client` and `@wau-captcha/server` have no runtime dependency. `@wau-captcha/react`
+depends on `@wau-captcha/client`, and React is its peer dependency.
+
+The widgets support every challenge type: `image_distort` (the default), `motion_noise`,
+`slide_puzzle`, `animal_jump`, `object_rotate` and `auto_check`. The package READMEs list the
+options of each.
 
 ## Install
 
@@ -72,16 +77,45 @@ npmjs.com links the commit and the workflow run. After installing, check it with
 npm audit signatures
 ```
 
-## Develop
+## Development
+
+Node.js 18 or later (CI runs 18, 22 and 24).
 
 ```bash
-npm ci
-npm run typecheck
-npm run build
-npm test
+npm ci              # install the workspaces
+npm run typecheck   # tsc over every package
+npm run build       # each package into its dist/: ESM, CommonJS and types; the client also its <script> build
+npm test            # node scripts/test.mjs
 ```
 
+`npm test` runs `scripts/test.mjs`: it bundles each `packages/*/test/*.test.mjs` with esbuild, so a
+test can import the TypeScript sources, and runs them with `node --test`. The client and server have
+tests; `@wau-captcha/react` has none. `npm run pack:dry` and `npm run publish:dry` show what would be
+published.
+
 The changes of each release are in [CHANGELOG.md](CHANGELOG.md).
+
+### Release
+
+1. Bump `version` in each changed `packages/*/package.json`. When `@wau-captcha/react` needs the new
+   client, raise its `@wau-captcha/client` range too. Run `npm install` so `package-lock.json`
+   follows, update the CDN version in the READMEs, and describe the changes in `CHANGELOG.md`.
+2. Once that is merged, run the `publish` workflow (Actions, publish, Run workflow). It typechecks,
+   builds and tests, then publishes in dependency order: `@wau-captcha/client` first, because react
+   depends on it, then `@wau-captcha/server`, then `@wau-captcha/react`, with provenance through npm
+   Trusted Publishing. Versions already on npm are skipped, so it can run again after a partial
+   failure. The root `release` script publishes from your own machine, without provenance.
+3. Print the integrity hash of the new client's `<script>` build as jsDelivr serves it:
+
+   ```bash
+   node scripts/sri.mjs <version>
+   ```
+
+4. In wau-dashboard, set `CLIENT_CDN_VERSION` and `CLIENT_CDN_INTEGRITY` in `lib/sdk-cdn.ts` to that
+   version and hash.
+
+A version published to npm can never be published again, not even after an unpublish: a broken
+release needs a new version number.
 
 ## Security
 

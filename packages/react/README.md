@@ -23,9 +23,11 @@ export default function SignUpPage() {
 
 Once solved, the form sends the token in the hidden field `wau-captcha-token`; your server
 redeems it with [`@wau-captcha/server`](https://www.npmjs.com/package/@wau-captcha/server).
-Props: `mode` (`WauCaptchaMode.INLINE` or `MODAL`), `challengeType`, `fallbackChallengeType` and `appearance`
-(for auto_check), `theme`, `inputName`, `labels` (e.g. `VI_LABELS` for Vietnamese), `onSuccess`, `onExpire`,
-`onError`.
+Props: `siteKey` and `baseUrl` (required), `mode` (`WauCaptchaMode.INLINE`, the default, or `MODAL`),
+`challengeType`, `fallbackChallengeType` and `appearance` (for auto_check), `theme` (`WauCaptchaTheme.AUTO`, the
+default, `LIGHT` or `DARK`), `inputName` (default `"wau-captcha-token"`), `labels` (e.g. `VI_LABELS` for
+Vietnamese), `timeoutMs` (per request, default 10 000), `className`, `onSuccess`, `onExpire`, `onError`. To start
+over, e.g. after your backend redeemed the token, change the component's `key`.
 
 `challengeType` is `ChallengeType.IMAGE_DISTORT` (the default), `MOTION_NOISE`, `SLIDE_PUZZLE`, `ANIMAL_JUMP`,
 `OBJECT_ROTATE` or `AUTO_CHECK`. `SLIDE_PUZZLE` and `ANIMAL_JUMP` need a pointer, so keep `IMAGE_DISTORT` where keyboard-only users
@@ -34,6 +36,8 @@ must get through; animal_jump plays its rounds from `blob:` URLs, which a Conten
 right and Done or with the arrow keys and Enter; it works without a pointer, but needs sight.
 
 ```jsx
+import { Appearance, ChallengeType, WauCaptcha } from "@wau-captcha/react";
+
 <WauCaptcha
   siteKey="pk_…"
   baseUrl="https://api.waucaptcha.com"
@@ -45,8 +49,9 @@ right and Done or with the arrow keys and Enter; it works without a pointer, but
 
 `AUTO_CHECK` asks nothing of most visitors: a compact box checks them once it is in view and turns into
 "Verified". A visitor it is unsure of gets a challenge of `fallbackChallengeType` (default `SLIDE_PUZZLE`;
-`IMAGE_DISTORT` where keyboard-only visitors matter) in its place, without being told why.
-`Appearance.INTERACTION_ONLY` keeps the captcha hidden unless the fallback or an error must be shown. It always
+`IMAGE_DISTORT` where keyboard-only visitors matter) in its place, without being told why; the service may pick
+another fallback the key allows. `appearance` is `Appearance.ALWAYS` (the default) or
+`Appearance.INTERACTION_ONLY`, which keeps the captcha hidden unless the fallback or an error must be shown. It always
 runs inline, also with `mode={WauCaptchaMode.MODAL}`, and after its token expired it checks again on the visitor's
 next click, key press or focus in the page.
 

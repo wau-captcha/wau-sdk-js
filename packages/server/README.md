@@ -20,10 +20,13 @@ if (!result.success) {
   // unknown, expired, already used, or issued for another key
 } else {
   result.challengeType; // "image_distort", "motion_noise", "slide_puzzle", "animal_jump", "object_rotate" or "auto_check"
+  result.solvedAt; // a Date: when the challenge was solved
   result.hostname; // the website the challenge was solved on: compare it with yours
-  result.behavior; // { verdict, score, reasons }: refuse not_measured, decide about suspicious
+  result.behavior; // { verdict, score, reasons }: refuse BehaviorVerdict.NOT_MEASURED, decide about SUSPICIOUS
 }
 ```
+
+The options also take `timeoutMs` (default 5 000) and `fetch`, to use instead of the global one.
 
 `challengeType` is `"auto_check"` when the visitor passed auto_check without being shown a puzzle: the browser
 and the behaviour in it looked like a person's. A visitor it was unsure of solved a challenge of its fallback type,
