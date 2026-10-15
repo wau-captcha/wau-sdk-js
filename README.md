@@ -42,7 +42,7 @@ Or with the `<script>` build, pinned to an exact release and its integrity hash
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@wau-captcha/client@1.6.0/dist/wau-captcha.global.js"
+  src="https://cdn.jsdelivr.net/npm/@wau-captcha/client@1.7.0/dist/wau-captcha.global.js"
   integrity="sha384-…"
   crossorigin="anonymous"></script>
 
@@ -64,6 +64,10 @@ if (!result.success || result.hostname !== "shop.example.com") throw new Error("
 // not_measured: the client sent no behaviour data; treat it as untrusted.
 if (result.behavior.verdict !== BehaviorVerdict.HUMAN) throw new Error("please try again");
 ```
+
+With `auto_check`, `result.behavior.reasons` says how a pass without a puzzle was earned: `cleared`, by a browser
+that solved a puzzle on your site before, or `first_visit`, on its signals alone. Refuse `first_visit` for sign-ups,
+logins and payments, and show a puzzle there instead, e.g. `challengeType: ChallengeType.SLIDE_PUZZLE` on those forms.
 
 The documentation is at https://waucaptcha.com/docs.
 

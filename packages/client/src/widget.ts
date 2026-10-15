@@ -243,7 +243,7 @@ export function renderWidget(container: HTMLElement, options: WidgetOptions): Wi
       // leave the time recorded under what the service accepts.
       const [probe] = await Promise.all([probeBrowser(), client.workDone(fetched.id), delay(AUTO_CHECK_MIN_MS)]);
       if (run !== runs) return;
-      const result = await client.verifyAuto(fetched.id, probe, { behavior: behavior.snapshot() });
+      const result = await client.verifyAuto(fetched.id, { ...probe, pointer: behavior.pointerSummary() }, { behavior: behavior.snapshot() });
       if (run !== runs) return;
       behavior.stop();
       recorder = undefined;

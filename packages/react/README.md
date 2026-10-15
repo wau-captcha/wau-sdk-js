@@ -55,4 +55,9 @@ another fallback the key allows. `appearance` is `Appearance.ALWAYS` (the defaul
 runs inline, also with `mode={WauCaptchaMode.MODAL}`, and after its token expired it checks again on the visitor's
 next click, key press or focus in the page.
 
+A browser that solved a puzzle on your site keeps the clearance the service hands out with the token, in
+`localStorage`, and auto_check sends it back with counts of how the mouse moves were made: with it the browser passes
+for a while without a puzzle. Your backend sees how a pass was earned in the siteverify `behavior.reasons`, `cleared`
+or `first_visit`; refuse `first_visit` for sign-ups, logins and payments.
+
 Documentation: https://waucaptcha.com/docs · Changes: [CHANGELOG.md](https://github.com/wau-captcha/wau-sdk-js/blob/main/CHANGELOG.md) · License: MIT

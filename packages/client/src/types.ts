@@ -74,7 +74,28 @@ export type RotateRound = { frame: number; presses: RotatePress[]; doneMs: numbe
  * navigator.language, which every request carries in its headers already, and the names of the
  * browser probes that tripped, e.g. "outer_zero". Nothing else about the browser leaves the page.
  */
-export type AutoProbe = { userAgent: string; language: string; findings: string[] };
+export type AutoProbe = {
+  userAgent: string;
+  language: string;
+  findings: string[];
+  /**
+   * The clearance to send back. Left out, verifyAuto sends the one this browser keeps for the site
+   * key: after a puzzle is solved, the service hands one out with the token, and it lets the browser
+   * pass auto_check on the site without a puzzle for a while.
+   */
+  clearance?: string | undefined;
+  /** What the recorder's pointerSummary counted while the check ran; sent when it counted a move. */
+  pointer?: PointerSummary | undefined;
+};
+
+/**
+ * How the trusted mouse moves over the page were produced, counted by recordBehavior with
+ * `page: true` before it thins them out: `n` moves; `k` of them came coalesced with others, which
+ * a mouse polled faster than the screen redraws often produces (-1 when the browser has no
+ * getCoalescedEvents); `z` had no movementX or movementY although the position changed; `s` came
+ * within 1 ms of the most common gap between moves. Counts only, no positions or times.
+ */
+export type PointerSummary = { n: number; k: number; z: number; s: number };
 
 /**
  * How the person behaved while a challenge was on screen, as recordBehavior records it and the

@@ -6,7 +6,18 @@ export { WauCaptchaClient } from "./client.js";
 export type { WauCaptchaClientOptions } from "./client.js";
 export { leadingZeroBits, sha256, solvePow } from "./pow.js";
 export type { SolveOptions } from "./pow.js";
-export type { AutoProbe, Behavior, Challenge, JumpClick, RotatePress, RotateRound, SlideDrag, VerifyOptions, VerifyResult } from "./types.js";
+export type {
+  AutoProbe,
+  Behavior,
+  Challenge,
+  JumpClick,
+  PointerSummary,
+  RotatePress,
+  RotateRound,
+  SlideDrag,
+  VerifyOptions,
+  VerifyResult,
+} from "./types.js";
 export { Appearance, ChallengeType, ErrorCode } from "./constants.js";
 export { WauCaptchaError } from "./errors.js";
 export { trackJump } from "./jump-tracker.js";

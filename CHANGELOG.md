@@ -2,6 +2,29 @@
 
 Every release of the three packages, newest first. Versions follow [Semantic Versioning](https://semver.org/).
 
+## @wau-captcha/client 1.7.0
+
+- auto_check clearances. A puzzle solved comes with a clearance from the service: `verify` keeps it in
+  `localStorage` under `wau-captcha:clearance:<siteKey>` (a private window or blocked storage just means none) and
+  `verifyAuto` sends it back in the auto_check answer as `c`, so a browser that solved a puzzle on a site passes
+  auto_check there without one for a while (on the hosted service 7 days, 6 automatic passes an hour and 24 a day). It
+  goes nowhere else, never to your backend, and nothing the package exports reads it. `AutoProbe.clearance` sends
+  another one instead.
+- Pointer counts. `recordBehavior` with `page: true` also counts how the trusted mouse moves were made, before it thins
+  them out, and the recorder's new `pointerSummary()` returns them as a `PointerSummary`, `{ n, k, z, s }`: the moves,
+  those coalesced with others (`-1` without `getCoalescedEvents`), those without movement although the position
+  changed, and those within 1 ms of the most common gap between moves. Counts only, no positions or times.
+  `verifyAuto` sends them as `m` when a move was counted (`AutoProbe.pointer`); the widget does it by itself.
+- Your backend sees how an auto_check pass was earned in the siteverify `behavior.reasons`: `cleared` (a clearance) or
+  `first_visit` (no clearance, on the signals alone, where the service allows it). Refuse `first_visit` for sign-ups,
+  logins and payments. `@wau-captcha/server` passes the reasons through as they are.
+- Answers of 1.6.0 and older still work: they carry neither field and are judged as before.
+
+## @wau-captcha/react 1.6.0
+
+- Depends on `@wau-captcha/client` ^1.7.0. `<WauCaptcha />` keeps the clearance of a solved puzzle and sends it, with the
+  pointer counts, in its auto_check answers.
+
 ## @wau-captcha/client 1.6.0
 
 - A new challenge type, `ChallengeType.AUTO_CHECK` (`auto_check`), like Cloudflare Turnstile without its checkbox:

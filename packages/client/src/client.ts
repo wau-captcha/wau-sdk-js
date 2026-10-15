@@ -1,10 +1,22 @@
+import { keepClearance, keptClearance, MAX_CLEARANCE } from "./clearance.js";
 import { ChallengeType } from "./constants.js";
 import { WauCaptchaError } from "./errors.js";
 import { normalizeBaseUrl, requestJson } from "./http.js";
 import { decodeBase64, solvePow } from "./pow.js";
-import type { AutoProbe, Challenge, JumpClick, RotateRound, SlideDrag, VerifyOptions, VerifyResult } from "./types.js";
+import type { AutoProbe, Challenge, JumpClick, PointerSummary, RotateRound, SlideDrag, VerifyOptions, VerifyResult } from "./types.js";
 
-export type { AutoProbe, Behavior, Challenge, JumpClick, RotatePress, RotateRound, SlideDrag, VerifyOptions, VerifyResult } from "./types.js";
+export type {
+  AutoProbe,
+  Behavior,
+  Challenge,
+  JumpClick,
+  PointerSummary,
+  RotatePress,
+  RotateRound,
+  SlideDrag,
+  VerifyOptions,
+  VerifyResult,
+} from "./types.js";
 
 export interface WauCaptchaClientOptions {
   /** Public site key of the API key, "pk_…". Safe to ship to browsers. */
@@ -52,14 +64,20 @@ interface VerifyReply {
   token?: string;
   /** Seconds until the token can no longer be redeemed. */
   expires_in?: number;
+  /** After a puzzle (not auto_check): the clearance this browser keeps for auto_check. */
+  clearance?: string;
 }
 
 /** Challenges whose proof of work is kept while they wait for an answer; older ones are dropped. */
 const MAX_PENDING_WORK = 4;
-/** The most of an auto_check answer the service reads: the characters of the User-Agent, the language and the findings. */
+/**
+ * The most of an auto_check answer the service reads: the characters of the User-Agent, the
+ * language and the findings, and the moves the pointer counts may count.
+ */
 const MAX_AUTO_USER_AGENT = 512;
 const MAX_AUTO_LANGUAGE = 35;
 const MAX_AUTO_FINDINGS = 16;
+const MAX_AUTO_POINTER_MOVES = 100_000;
 
 /** Talks to the public captcha API from a browser: fetch a challenge, submit its answer. */
 export class WauCaptchaClient {
@@ -169,6 +187,9 @@ export class WauCaptchaClient {
     }
     this.stopWork(challengeId);
     if (!reply.success || !reply.token) return { success: false };
+    // A solved puzzle comes with a clearance: kept, it lets this browser pass auto_check on this
+    // site without a puzzle for a while. verifyAuto is the only one to send it, to the service.
+    if (typeof reply.clearance === "string" && reply.clearance) keepClearance(this.siteKey, reply.clearance);
     return { success: true, token: reply.token, expiresAt: new Date(Date.now() + (reply.expires_in ?? 0) * 1000) };
   }
 
@@ -206,16 +227,21 @@ export class WauCaptchaClient {
    * Submits what probeBrowser found for an auto_check challenge: verify with the probe written as
    * the JSON the service reads. Send it once workDone resolves and at least 1.5 s after the
    * challenge arrived, with what recordBehavior (`page: true`) recorded meanwhile: the service
-   * judges an answer recorded over less than 1 s automated. success false means the visitor must
-   * solve a challenge of the challenge's fallbackType instead; the service never says why.
+   * judges an answer recorded over less than 1 s automated. Add the recorder's pointerSummary as
+   * `pointer`. The clearance this browser keeps for the site goes along by itself. success false
+   * means the visitor must solve a challenge of the challenge's fallbackType instead; the service
+   * never says why.
    */
   verifyAuto(challengeId: string, probe: AutoProbe, options: VerifyOptions = {}): Promise<VerifyResult> {
+    const clearance = probe.clearance ?? keptClearance(this.siteKey);
     const answer = JSON.stringify({
       v: 1,
       ua: Array.from(probe.userAgent).slice(0, MAX_AUTO_USER_AGENT).join(""),
       // A language tag is ASCII letters, digits and hyphens; anything else would only make the answer malformed.
       lang: probe.language.replace(/[^\w-]/g, "").slice(0, MAX_AUTO_LANGUAGE),
       f: probe.findings.slice(0, MAX_AUTO_FINDINGS),
+      ...(clearance && clearance.length <= MAX_CLEARANCE ? { c: clearance } : {}),
+      ...(probe.pointer && probe.pointer.n > 0 ? { m: boundPointer(probe.pointer) } : {}),
     });
     return this.verify(challengeId, answer, options);
   }
@@ -248,4 +274,14 @@ export class WauCaptchaClient {
 /** Tenths of a pixel or millisecond are as precise as the check needs, and keep the answer short. */
 function round1(value: number): number {
   return Math.round(value * 10) / 10;
+}
+
+/**
+ * The pointer counts as whole numbers within what the service accepts, which refuses the whole
+ * answer otherwise: n at most 100 000, k, z and s at most n, k -1 when the browser cannot tell.
+ */
+function boundPointer({ n, k, z, s }: PointerSummary): PointerSummary {
+  const whole = (count: number, most: number) => (Number.isFinite(count) ? Math.min(Math.max(Math.floor(count), 0), most) : 0);
+  const moves = whole(n, MAX_AUTO_POINTER_MOVES);
+  return { n: moves, k: k === -1 ? -1 : whole(k, moves), z: whole(z, moves), s: whole(s, moves) };
 }
