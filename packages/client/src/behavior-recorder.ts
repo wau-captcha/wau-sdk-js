@@ -1,4 +1,4 @@
-import type { Behavior } from "./types.js";
+import type { Behavior, PointerSummary } from "./types.js";
 
 // What the service reads: a move every 16 ms at most, the latest 200 samples, 64 key intervals.
 // The latest samples, not an even thinning of a long session, keep the strokes of the pointer
@@ -6,6 +6,8 @@ import type { Behavior } from "./types.js";
 const MIN_MOVE_INTERVAL_MS = 16;
 const MAX_POINTER = 200;
 const MAX_KEY_INTERVALS = 64;
+/** The gaps between mouse moves the pointer summary tells apart, in whole ms; longer ones are pauses. */
+const MAX_GAP_MS = 255;
 
 /** Events on the widget that a script could dispatch instead of the person. */
 const CHECKED_EVENTS = ["pointerdown", "pointerup", "click", "keydown", "keyup", "input", "paste", "change"] as const;
@@ -21,7 +23,8 @@ export interface BehaviorRecorderOptions {
   /**
    * Also records where the pointer goes down anywhere on the page, not only on the widget, still
    * measured from the widget: for auto_check, where the visitor never touches the widget. Moves
-   * are recorded anywhere either way.
+   * are recorded anywhere either way. It also counts how the mouse moves were produced, for
+   * pointerSummary.
    */
   page?: boolean | undefined;
 }
@@ -29,6 +32,11 @@ export interface BehaviorRecorderOptions {
 export interface BehaviorRecorder {
   /** What was recorded since the challenge was shown, to send with its answer now. */
   snapshot: () => Behavior;
+  /**
+   * With `page: true`, how the mouse moves were produced since the challenge was shown, for
+   * verifyAuto; no moves otherwise.
+   */
+  pointerSummary: () => PointerSummary;
   /** Stops listening. */
   stop: () => void;
 }
@@ -51,12 +59,42 @@ export function recordBehavior({ root, input, page = false }: BehaviorRecorderOp
   let untrusted = 0;
   let hiddenMs = 0;
   let hiddenSince = document.hidden ? start : null;
+  // auto_check's pointer evidence, over every trusted mouse move: counts and the gaps between moves
+  // in whole ms, nothing per move.
+  let moves = 0;
+  let coalesced = 0;
+  let unmoved = 0;
+  let noCoalescedEvents = false;
+  let previousTime: number | null = null;
+  let previousX = 0;
+  let previousY = 0;
+  const gaps = new Uint32Array(MAX_GAP_MS + 1);
+
+  /**
+   * A mouse moved by hand is often polled faster than the screen redraws, so the browser coalesces
+   * moves, and it reports the movement with every move; a fixed timer spaces moves evenly.
+   */
+  function count(event: PointerEvent) {
+    if (event.pointerType !== "mouse") return;
+    moves++;
+    if (typeof event.getCoalescedEvents !== "function") noCoalescedEvents = true;
+    else if (event.getCoalescedEvents().length > 1) coalesced++;
+    if (previousTime !== null) {
+      if (event.movementX === 0 && event.movementY === 0 && (event.clientX !== previousX || event.clientY !== previousY)) unmoved++;
+      const gap = Math.round(event.timeStamp - previousTime);
+      if (gap >= 0 && gap <= MAX_GAP_MS) gaps[gap]++;
+    }
+    previousTime = event.timeStamp;
+    previousX = event.clientX;
+    previousY = event.clientY;
+  }
 
   function sample(event: PointerEvent) {
     // Moves a page script makes up elsewhere say nothing about the person; on the widget they count below.
     if (!event.isTrusted) return;
     const t = event.timeStamp - start;
     if (event.type === "pointermove") {
+      if (page) count(event);
       if (t - lastMove < MIN_MOVE_INTERVAL_MS) return;
       lastMove = t;
     }
@@ -121,6 +159,12 @@ export function recordBehavior({ root, input, page = false }: BehaviorRecorderOp
         hidden_ms: Math.round(hiddenMs + (hiddenSince === null ? 0 : now - hiddenSince)),
         ...browserHints(),
       };
+    },
+    pointerSummary() {
+      let common = 0;
+      for (let gap = 1; gap <= MAX_GAP_MS; gap++) if (gaps[gap] > gaps[common]) common = gap;
+      const steady = (common > 0 ? gaps[common - 1] : 0) + gaps[common] + (common < MAX_GAP_MS ? gaps[common + 1] : 0);
+      return { n: moves, k: noCoalescedEvents ? -1 : coalesced, z: unmoved, s: steady };
     },
     stop() {
       document.removeEventListener("pointermove", sample, { capture: true });

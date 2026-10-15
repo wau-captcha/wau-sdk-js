@@ -101,7 +101,8 @@ export function ChallengePanel({ captcha, labels, challengeType, appearance }: C
     if (status !== CaptchaStatus.READY || challenge?.type !== ChallengeType.AUTO_CHECK) return;
     let live = true;
     void Promise.all([probeBrowser(), workDone(challenge.id), delay(AUTO_CHECK_MIN_MS)]).then(([probe]) => {
-      if (live) void verifyAuto(challenge, probe, recorderRef.current?.snapshot());
+      const recorder = recorderRef.current;
+      if (live) void verifyAuto(challenge, { ...probe, pointer: recorder?.pointerSummary() }, recorder?.snapshot());
     });
     return () => {
       live = false;

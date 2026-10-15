@@ -1,3 +1,5 @@
 node_modules/
 dist/
 *.tgz
+CHANGELOG.md
+SECURITY.md
