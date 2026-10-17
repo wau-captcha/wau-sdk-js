@@ -1,6 +1,6 @@
 "use client";
 
-import { Appearance, ChallengeType, type WauCaptchaError } from "@wau-captcha/client";
+import { Appearance, ChallengeType, type WauCaptchaError } from "@waucaptcha-sdk/client";
 import { useState } from "react";
 import { CaptchaDialog } from "./captcha-dialog.js";
 import { CaptchaStyles } from "./captcha-styles.js";
@@ -41,7 +41,7 @@ export type WauCaptchaProps = {
   labels?: Partial<WauCaptchaLabels> | undefined;
   /** How long to wait for each reply. Default 10 000. */
   timeoutMs?: number | undefined;
-  /** Called with the token of a correct answer; your backend redeems it with @wau-captcha/server. */
+  /** Called with the token of a correct answer; your backend redeems it with @waucaptcha-sdk/server. */
   onSuccess?: ((token: string) => void) | undefined;
   /**
    * Called when the token expires unused. INLINE starts over by itself; MODAL waits for the button;

@@ -11,7 +11,7 @@ import {
   WauCaptchaClient,
   type WauCaptchaClientOptions,
   WauCaptchaError,
-} from "@wau-captcha/client";
+} from "@waucaptcha-sdk/client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 /** What a captcha is doing. Only READY takes an answer. */

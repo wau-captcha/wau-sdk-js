@@ -1,14 +1,14 @@
-# @wau-captcha/server
+# @waucaptcha-sdk/server
 
 Node.js SDK of [WAU Captcha](https://waucaptcha.com): redeem the tokens your frontend obtained,
 with your secret key. Node.js 18 or later, no dependencies.
 
 ```bash
-npm install @wau-captcha/server
+npm install @waucaptcha-sdk/server
 ```
 
 ```js
-import { BehaviorVerdict, ChallengeType, WauCaptchaServer } from "@wau-captcha/server";
+import { BehaviorVerdict, ChallengeType, WauCaptchaServer } from "@waucaptcha-sdk/server";
 
 const wau = new WauCaptchaServer({
   secretKey: process.env.WAU_SECRET_KEY,

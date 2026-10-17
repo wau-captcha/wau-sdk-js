@@ -1,7 +1,7 @@
 import { createElement } from "./dom.js";
 import type { WidgetLabels } from "./labels.js";
 
-/** An icon drawn like those of @wau-captcha/react. */
+/** An icon drawn like those of @waucaptcha-sdk/react. */
 function icon(path: string, className = "wau-captcha__icon"): string {
   return (
     `<svg class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ` +

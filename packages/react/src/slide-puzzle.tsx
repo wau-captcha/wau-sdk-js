@@ -1,4 +1,4 @@
-import { type Challenge, type SlideDrag, trackSlide } from "@wau-captcha/client";
+import { type Challenge, type SlideDrag, trackSlide } from "@waucaptcha-sdk/client";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRightIcon, SpinnerIcon } from "./icons.js";
 import type { WauCaptchaLabels } from "./labels.js";

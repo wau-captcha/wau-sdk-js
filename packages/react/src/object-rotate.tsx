@@ -1,4 +1,4 @@
-import { type Challenge, type RotateRound, type RotateState, type RotateTracker, trackRotate } from "@wau-captcha/client";
+import { type Challenge, type RotateRound, type RotateState, type RotateTracker, trackRotate } from "@waucaptcha-sdk/client";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { SpinnerIcon } from "./icons.js";
 import type { WauCaptchaLabels } from "./labels.js";

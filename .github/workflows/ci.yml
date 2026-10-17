@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # @wau-captcha/server supports Node.js 18 and later.
+        # @waucaptcha-sdk/server supports Node.js 18 and later.
         node: [18, 22, 24]
     steps:
       - uses: actions/checkout@v7

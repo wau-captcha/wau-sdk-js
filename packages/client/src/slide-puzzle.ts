@@ -3,7 +3,7 @@ import { createElement } from "./dom.js";
 import type { WidgetLabels } from "./labels.js";
 import { trackSlide } from "./slide-tracker.js";
 
-/** The arrow on the handle, drawn like the icons of @wau-captcha/react. */
+/** The arrow on the handle, drawn like the icons of @waucaptcha-sdk/react. */
 const ARROW_ICON =
   '<svg class="wau-captcha__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
   'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';

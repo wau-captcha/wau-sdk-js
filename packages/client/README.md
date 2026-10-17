@@ -1,16 +1,16 @@
-# @wau-captcha/client
+# @waucaptcha-sdk/client
 
 Browser SDK of [WAU Captcha](https://waucaptcha.com): a ready-made widget, and a client to build
 your own UI. No dependencies.
 
 ```bash
-npm install @wau-captcha/client
+npm install @waucaptcha-sdk/client
 ```
 
 ## Widget
 
 ```js
-import { renderWidget } from "@wau-captcha/client";
+import { renderWidget } from "@waucaptcha-sdk/client";
 
 const widget = renderWidget(document.querySelector("#captcha"), {
   siteKey: "pk_…",
@@ -24,7 +24,7 @@ valid, and `destroy()` removes the widget. `challengeType` defaults to `Challeng
 to `"wau-captcha-token"` and `timeoutMs`, per request, to 10 000.
 
 ```js
-import { Appearance, ChallengeType, renderWidget } from "@wau-captcha/client";
+import { Appearance, ChallengeType, renderWidget } from "@waucaptcha-sdk/client";
 
 renderWidget(document.querySelector("#captcha"), {
   siteKey: "pk_…",
@@ -50,14 +50,14 @@ data or a browser update means one more puzzle. Your backend sees how a pass was
 `behavior.reasons`, `cleared` or `first_visit`; refuse `first_visit` for sign-ups, logins and payments.
 
 Inside a form, a solved widget puts the token in the hidden field `wau-captcha-token`. Your server
-redeems it with [`@wau-captcha/server`](https://www.npmjs.com/package/@wau-captcha/server).
+redeems it with [`@waucaptcha-sdk/server`](https://www.npmjs.com/package/@waucaptcha-sdk/server).
 
 The `<script>` build renders every element with `data-wau-captcha` by itself; pin an exact release
 with its integrity hash:
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@wau-captcha/client@1.7.0/dist/wau-captcha.global.js"
+  src="https://cdn.jsdelivr.net/npm/@waucaptcha-sdk/client@1.7.0/dist/wau-captcha.global.js"
   integrity="sha384-…"
   crossorigin="anonymous"></script>
 <div data-wau-captcha data-site-key="pk_…" data-base-url="https://api.waucaptcha.com" data-lang="vi"></div>
@@ -71,7 +71,7 @@ field, and `data-lang="vi"` for Vietnamese texts (English otherwise). The build 
 ## Your own UI
 
 ```js
-import { recordBehavior, WauCaptchaClient } from "@wau-captcha/client";
+import { recordBehavior, WauCaptchaClient } from "@waucaptcha-sdk/client";
 
 const captcha = new WauCaptchaClient({ siteKey: "pk_…", baseUrl: "https://api.waucaptcha.com" });
 const challenge = await captcha.newChallenge();

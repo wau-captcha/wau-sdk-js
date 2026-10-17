@@ -56,7 +56,7 @@ const WAKE_EVENTS = ["pointerdown", "keydown", "focus"] as const;
 
 /**
  * Renders a ready-made captcha into `container`: the challenge, a text box and two buttons,
- * styled like <WauCaptcha /> from @wau-captcha/react. For slide_puzzle a slider takes the place
+ * styled like <WauCaptcha /> from @waucaptcha-sdk/react. For slide_puzzle a slider takes the place
  * of the text box and Verify, and releasing it submits the drag. For animal_jump the two rounds
  * play one after the other with a Replay button, and the click on the second submits both clicks.
  * For object_rotate the two rounds follow one another with Rotate left, Rotate right and Done

@@ -46,7 +46,7 @@ export interface RotateTracker {
  * Shows the rounds of an object_rotate challenge one after the other, a frame of the strip at a
  * time, and records the presses of each the way the service checks them: whole ms since the round
  * was shown, and the frame on screen when Done was pressed. Shared by renderWidget and
- * <WauCaptcha /> from @wau-captcha/react. The frame starts at 0; Rotate right goes to the next,
+ * <WauCaptcha /> from @waucaptcha-sdk/react. The frame starts at 0; Rotate right goes to the next,
  * Rotate left to the one before, round the strip both ways.
  *
  * Round 1 is timed from the load event of its strip; round 2, which loads meanwhile, from when it

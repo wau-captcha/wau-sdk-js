@@ -1,4 +1,4 @@
-import { DEFAULT_LABELS as DEFAULT_WIDGET_LABELS, VI_LABELS as VI_WIDGET_LABELS, type WidgetLabels } from "@wau-captcha/client";
+import { DEFAULT_LABELS as DEFAULT_WIDGET_LABELS, VI_LABELS as VI_WIDGET_LABELS, type WidgetLabels } from "@waucaptcha-sdk/client";
 
 /** The texts of <WauCaptcha />; loading and checking show as spinners, so they have none. */
 export type WauCaptchaLabels = Omit<WidgetLabels, "loading" | "checking"> & {

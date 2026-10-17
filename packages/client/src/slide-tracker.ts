@@ -31,7 +31,7 @@ interface Drag {
 /**
  * Records the drags of a slide_puzzle handle the way the service checks them: for each point, the
  * time since pointerdown, the left edge of the piece and the vertical offset of the pointer, in
- * pixels of the image. Shared by renderWidget and <WauCaptcha /> from @wau-captcha/react; put
+ * pixels of the image. Shared by renderWidget and <WauCaptcha /> from @waucaptcha-sdk/react; put
  * touch-action: none on the track so touch screens drag instead of scrolling. Returns a function
  * that stops recording.
  */
