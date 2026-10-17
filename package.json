@@ -1,7 +1,7 @@
 {
   "name": "wau-sdk-js",
   "private": true,
-  "description": "JavaScript SDKs for WAU Captcha: @wau-captcha/client for the browser, @wau-captcha/react for React and @wau-captcha/server for Node.js.",
+  "description": "JavaScript SDKs for WAU Captcha: @waucaptcha-sdk/client for the browser, @waucaptcha-sdk/react for React and @waucaptcha-sdk/server for Node.js.",
   "license": "MIT",
   "type": "module",
   "workspaces": [

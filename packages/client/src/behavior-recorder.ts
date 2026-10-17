@@ -45,7 +45,7 @@ export interface BehaviorRecorder {
  * Records how the person behaves while a challenge is on screen, for the behaviour check of the
  * service: pointer positions relative to the widget, the rhythm of key presses in the answer box
  * (never the keys), and signs of a script. Start it when the challenge is shown and stop it when
- * the challenge goes. Shared by renderWidget and <WauCaptcha /> from @wau-captcha/react; nothing
+ * the challenge goes. Shared by renderWidget and <WauCaptcha /> from @waucaptcha-sdk/react; nothing
  * leaves the page until a snapshot is sent with an answer.
  */
 export function recordBehavior({ root, input, page = false }: BehaviorRecorderOptions): BehaviorRecorder {

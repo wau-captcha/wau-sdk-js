@@ -138,5 +138,5 @@ export type VerifyOptions = {
   powNonce?: string | undefined;
 };
 
-/** A correct answer carries the one-time token your backend redeems with @wau-captcha/server. */
+/** A correct answer carries the one-time token your backend redeems with @waucaptcha-sdk/server. */
 export type VerifyResult = { success: true; token: string; expiresAt: Date } | { success: false };

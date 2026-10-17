@@ -6,12 +6,12 @@ server.
 
 | Package | What it is |
 | --- | --- |
-| [`@wau-captcha/client`](packages/client) | Browser SDK: a ready-made widget, also as a `<script>` build, and a client for your own UI. |
-| [`@wau-captcha/react`](packages/react) | `<WauCaptcha />` for React 18 or later, inline or in a modal. |
-| [`@wau-captcha/server`](packages/server) | Node.js 18+ SDK that redeems tokens with your secret key. |
+| [`@waucaptcha-sdk/client`](packages/client) | Browser SDK: a ready-made widget, also as a `<script>` build, and a client for your own UI. |
+| [`@waucaptcha-sdk/react`](packages/react) | `<WauCaptcha />` for React 18 or later, inline or in a modal. |
+| [`@waucaptcha-sdk/server`](packages/server) | Node.js 18+ SDK that redeems tokens with your secret key. |
 
-`@wau-captcha/client` and `@wau-captcha/server` have no runtime dependency. `@wau-captcha/react`
-depends on `@wau-captcha/client`, and React is its peer dependency.
+`@waucaptcha-sdk/client` and `@waucaptcha-sdk/server` have no runtime dependency. `@waucaptcha-sdk/react`
+depends on `@waucaptcha-sdk/client`, and React is its peer dependency.
 
 The widgets support every challenge type: `image_distort` (the default), `motion_noise`,
 `slide_puzzle`, `animal_jump`, `object_rotate` and `auto_check`. The package READMEs list the
@@ -20,8 +20,8 @@ options of each.
 ## Install
 
 ```bash
-npm install @wau-captcha/client   # or @wau-captcha/react
-npm install @wau-captcha/server
+npm install @waucaptcha-sdk/client   # or @waucaptcha-sdk/react
+npm install @waucaptcha-sdk/server
 ```
 
 ## A minimal integration
@@ -29,7 +29,7 @@ npm install @wau-captcha/server
 In the page, with a bundler:
 
 ```js
-import { renderWidget } from "@wau-captcha/client";
+import { renderWidget } from "@waucaptcha-sdk/client";
 
 renderWidget(document.querySelector("#captcha"), {
   siteKey: "pk_…",
@@ -42,7 +42,7 @@ Or with the `<script>` build, pinned to an exact release and its integrity hash
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@wau-captcha/client@1.7.0/dist/wau-captcha.global.js"
+  src="https://cdn.jsdelivr.net/npm/@waucaptcha-sdk/client@1.7.0/dist/wau-captcha.global.js"
   integrity="sha384-…"
   crossorigin="anonymous"></script>
 
@@ -55,7 +55,7 @@ Or with the `<script>` build, pinned to an exact release and its integrity hash
 Once solved, the form sends the token in the hidden field `wau-captcha-token`. On your server:
 
 ```js
-import { BehaviorVerdict, WauCaptchaServer } from "@wau-captcha/server";
+import { BehaviorVerdict, WauCaptchaServer } from "@waucaptcha-sdk/server";
 
 const wau = new WauCaptchaServer({ secretKey: process.env.WAU_SECRET_KEY, baseUrl: "https://api.waucaptcha.com" });
 
@@ -94,19 +94,19 @@ npm test            # node scripts/test.mjs
 
 `npm test` runs `scripts/test.mjs`: it bundles each `packages/*/test/*.test.mjs` with esbuild, so a
 test can import the TypeScript sources, and runs them with `node --test`. The client and server have
-tests; `@wau-captcha/react` has none. `npm run pack:dry` and `npm run publish:dry` show what would be
+tests; `@waucaptcha-sdk/react` has none. `npm run pack:dry` and `npm run publish:dry` show what would be
 published.
 
 The changes of each release are in [CHANGELOG.md](CHANGELOG.md).
 
 ### Release
 
-1. Bump `version` in each changed `packages/*/package.json`. When `@wau-captcha/react` needs the new
-   client, raise its `@wau-captcha/client` range too. Run `npm install` so `package-lock.json`
+1. Bump `version` in each changed `packages/*/package.json`. When `@waucaptcha-sdk/react` needs the new
+   client, raise its `@waucaptcha-sdk/client` range too. Run `npm install` so `package-lock.json`
    follows, update the CDN version in the READMEs, and describe the changes in `CHANGELOG.md`.
 2. Once that is merged, run the `publish` workflow (Actions, publish, Run workflow). It typechecks,
-   builds and tests, then publishes in dependency order: `@wau-captcha/client` first, because react
-   depends on it, then `@wau-captcha/server`, then `@wau-captcha/react`, with provenance through npm
+   builds and tests, then publishes in dependency order: `@waucaptcha-sdk/client` first, because react
+   depends on it, then `@waucaptcha-sdk/server`, then `@waucaptcha-sdk/react`, with provenance through npm
    Trusted Publishing. Versions already on npm are skipped, so it can run again after a partial
    failure. The root `release` script publishes from your own machine, without provenance.
 3. Print the integrity hash of the new client's `<script>` build as jsDelivr serves it:

@@ -1,4 +1,4 @@
-// Prints the Subresource Integrity hash of the <script> build of @wau-captcha/client as jsDelivr
+// Prints the Subresource Integrity hash of the <script> build of @waucaptcha-sdk/client as jsDelivr
 // serves it, for the integrity attribute of the CDN snippet. Run it after each release and update
 // the dashboard's lib/sdk-cdn.ts with the version and the hash together.
 //   node scripts/sri.mjs 1.3.0
@@ -12,7 +12,7 @@ if (!version || !/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(version)) {
 
 // The file name of the global build, as scripts/build-package.mjs writes it and the jsdelivr
 // field of packages/client/package.json names it.
-const url = `https://cdn.jsdelivr.net/npm/@wau-captcha/client@${version}/dist/wau-captcha.global.js`;
+const url = `https://cdn.jsdelivr.net/npm/@waucaptcha-sdk/client@${version}/dist/wau-captcha.global.js`;
 const response = await fetch(url);
 if (!response.ok) {
   console.error(`${url} answered ${response.status}; is ${version} published?`);

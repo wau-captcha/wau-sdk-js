@@ -1,5 +1,5 @@
 {
-  "name": "@wau-captcha/server",
+  "name": "@waucaptcha-sdk/server",
   "version": "1.6.0",
   "description": "Node.js SDK for WAU Captcha: redeem the tokens your frontend obtained, with your secret key.",
   "license": "MIT",

@@ -6,7 +6,7 @@
     "lib": ["ES2020", "DOM"],
     "jsx": "react-jsx",
     "paths": {
-      "@wau-captcha/client": ["./packages/client/src/index.ts"]
+      "@waucaptcha-sdk/client": ["./packages/client/src/index.ts"]
     },
     "strict": true,
     "exactOptionalPropertyTypes": true,

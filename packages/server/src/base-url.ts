@@ -4,7 +4,7 @@ const LOCAL_HOSTS = ["localhost", "127.0.0.1", "[::1]"];
 /**
  * The service address without trailing slashes. It must be https, so tokens and secret keys are
  * never sent in clear text; http is only allowed for localhost, 127.0.0.1 and [::1]. Anything else
- * is a TypeError. The same rule as normalizeBaseUrl of @wau-captcha/client: keep the two in step.
+ * is a TypeError. The same rule as normalizeBaseUrl of @waucaptcha-sdk/client: keep the two in step.
  */
 export function normalizeBaseUrl(baseUrl: string | undefined): string {
   if (typeof baseUrl !== "string" || !baseUrl.trim()) throw new TypeError("baseUrl is required, e.g. https://api.waucaptcha.com");

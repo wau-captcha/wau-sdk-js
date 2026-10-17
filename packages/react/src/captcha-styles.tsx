@@ -1,4 +1,4 @@
-import { WIDGET_STYLES } from "@wau-captcha/client";
+import { WIDGET_STYLES } from "@waucaptcha-sdk/client";
 
 /**
  * Adds the stylesheet of the widget once per page. React 19 hoists it into <head> and drops

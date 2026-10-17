@@ -9,7 +9,7 @@ import {
   recordBehavior,
   type SlideDrag,
   type WauCaptchaError,
-} from "@wau-captcha/client";
+} from "@waucaptcha-sdk/client";
 import { type KeyboardEvent, useEffect, useRef } from "react";
 import { AnimalJump } from "./animal-jump.js";
 import { AutoCheck } from "./auto-check.js";

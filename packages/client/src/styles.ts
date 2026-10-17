@@ -1,5 +1,5 @@
 /*
- * The look of the widget, shared by renderWidget and <WauCaptcha /> from @wau-captcha/react.
+ * The look of the widget, shared by renderWidget and <WauCaptcha /> from @waucaptcha-sdk/react.
  * Colors follow the color-scheme of the page through light-dark(); each one can be overridden
  * with a --wau-captcha-* custom property on the widget or any ancestor, e.g.
  * `--wau-captcha-primary: #0a7`.

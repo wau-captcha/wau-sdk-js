@@ -2,6 +2,13 @@
 
 Every release of the three packages, newest first. Versions follow [Semantic Versioning](https://semver.org/).
 
+## New package names (2026-10-17)
+
+- The packages are now published as `@waucaptcha-sdk/client`, `@waucaptcha-sdk/react` and `@waucaptcha-sdk/server`,
+  starting at client 1.7.0, react 1.6.0 and server 1.6.0, with the same code as the last `@wau-captcha` releases.
+- To move, replace `@wau-captcha/` with `@waucaptcha-sdk/` in `package.json` and in your imports.
+- The `@wau-captcha` packages stay on npm and keep working, but get no further releases.
+
 ## @wau-captcha/client 1.7.0
 
 - auto_check clearances. A puzzle solved comes with a clearance from the service: `verify` keeps it in

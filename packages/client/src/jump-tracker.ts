@@ -49,7 +49,7 @@ interface Playback {
  * Plays the rounds of an animal_jump challenge one after the other and records a click on each
  * the way the service checks them: where it landed in CSS pixels of the image, the ms since its
  * playback started, and the replays used. Shared by renderWidget and <WauCaptcha /> from
- * @wau-captcha/react. Returns the Replay action and a function that stops it all.
+ * @waucaptcha-sdk/react. Returns the Replay action and a function that stops it all.
  *
  * Browsers share the animation of every image with the same URL, so each playback is a fresh <img>
  * with an object URL of its own, which plays once from the first frame; it is timed from its load

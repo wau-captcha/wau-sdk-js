@@ -1,14 +1,14 @@
-# @wau-captcha/react
+# @waucaptcha-sdk/react
 
 `<WauCaptcha />`, the React component of [WAU Captcha](https://waucaptcha.com), for React 18 or
 later: inline or in a modal, with the token in your form.
 
 ```bash
-npm install @wau-captcha/react
+npm install @waucaptcha-sdk/react
 ```
 
 ```jsx
-import { WauCaptcha } from "@wau-captcha/react";
+import { WauCaptcha } from "@waucaptcha-sdk/react";
 
 export default function SignUpPage() {
   return (
@@ -22,7 +22,7 @@ export default function SignUpPage() {
 ```
 
 Once solved, the form sends the token in the hidden field `wau-captcha-token`; your server
-redeems it with [`@wau-captcha/server`](https://www.npmjs.com/package/@wau-captcha/server).
+redeems it with [`@waucaptcha-sdk/server`](https://www.npmjs.com/package/@waucaptcha-sdk/server).
 Props: `siteKey` and `baseUrl` (required), `mode` (`WauCaptchaMode.INLINE`, the default, or `MODAL`),
 `challengeType`, `fallbackChallengeType` and `appearance` (for auto_check), `theme` (`WauCaptchaTheme.AUTO`, the
 default, `LIGHT` or `DARK`), `inputName` (default `"wau-captcha-token"`), `labels` (e.g. `VI_LABELS` for
@@ -36,7 +36,7 @@ must get through; animal_jump plays its rounds from `blob:` URLs, which a Conten
 right and Done or with the arrow keys and Enter; it works without a pointer, but needs sight.
 
 ```jsx
-import { Appearance, ChallengeType, WauCaptcha } from "@wau-captcha/react";
+import { Appearance, ChallengeType, WauCaptcha } from "@waucaptcha-sdk/react";
 
 <WauCaptcha
   siteKey="pk_…"
