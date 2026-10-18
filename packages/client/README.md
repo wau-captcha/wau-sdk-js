@@ -57,7 +57,7 @@ with its integrity hash:
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@waucaptcha-sdk/client@1.7.0/dist/wau-captcha.global.js"
+  src="https://cdn.jsdelivr.net/npm/@waucaptcha-sdk/client@1.7.1/dist/wau-captcha.global.js"
   integrity="sha384-…"
   crossorigin="anonymous"></script>
 <div data-wau-captcha data-site-key="pk_…" data-base-url="https://api.waucaptcha.com" data-lang="vi"></div>

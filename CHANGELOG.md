@@ -2,6 +2,16 @@
 
 Every release of the three packages, newest first. Versions follow [Semantic Versioning](https://semver.org/).
 
+## @waucaptcha-sdk/client 1.7.1
+
+- The auto_check box shows the WAU Captcha logo, the W on its app tile, where it showed a shield. The tile keeps the
+  colours of the brand, purple on light and lime on dark, whatever `--wau-captcha-primary` says.
+
+## @waucaptcha-sdk/react 1.6.1
+
+- Depends on `@waucaptcha-sdk/client` ^1.7.1. The auto_check box of `<WauCaptcha />` shows the WAU Captcha logo
+  instead of the shield.
+
 ## New package names (2026-10-17)
 
 - The packages are now published as `@waucaptcha-sdk/client`, `@waucaptcha-sdk/react` and `@waucaptcha-sdk/server`,

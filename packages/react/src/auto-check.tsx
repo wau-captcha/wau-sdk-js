@@ -1,4 +1,4 @@
-import { CheckIcon, MarkIcon, SpinnerIcon } from "./icons.js";
+import { CheckIcon, LogoIcon, SpinnerIcon } from "./icons.js";
 import type { WauCaptchaLabels } from "./labels.js";
 
 export type AutoCheckProps = {
@@ -15,7 +15,7 @@ export function AutoCheck({ passed, labels }: AutoCheckProps) {
       <span className="wau-captcha__auto-text">{passed ? labels.verified : labels.autoChecking}</span>
       <span className="wau-captcha__mark">
         <span className="wau-captcha__mark-tile">
-          <MarkIcon />
+          <LogoIcon />
         </span>
         WAU Captcha
       </span>
