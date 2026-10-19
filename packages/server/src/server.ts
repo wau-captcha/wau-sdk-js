@@ -25,9 +25,9 @@ export type VerifyTokenResult =
       behavior: BehaviorResult;
       /**
        * Host name of the website the challenge was solved on, from the Origin of the browser's
-       * requests: compare it with your own domain. A script outside a browser can forge it, so it
-       * stops other websites from using your key, not bots. Empty when the challenge was asked for
-       * without an origin, or from a service before site binding.
+       * requests: compare it with your own domains, with hostnameMatches. A script outside a
+       * browser can forge it, so it stops other websites from using your key, not bots. Empty
+       * when the challenge was asked for without an origin, or from a service before site binding.
        */
       hostname: string;
     }

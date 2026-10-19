@@ -8,7 +8,7 @@ npm install @waucaptcha-sdk/server
 ```
 
 ```js
-import { BehaviorVerdict, ChallengeType, WauCaptchaServer } from "@waucaptcha-sdk/server";
+import { BehaviorVerdict, ChallengeType, WauCaptchaServer, hostnameMatches } from "@waucaptcha-sdk/server";
 
 const wau = new WauCaptchaServer({
   secretKey: process.env.WAU_SECRET_KEY,
@@ -21,12 +21,24 @@ if (!result.success) {
 } else {
   result.challengeType; // "image_distort", "motion_noise", "slide_puzzle", "animal_jump", "object_rotate" or "auto_check"
   result.solvedAt; // a Date: when the challenge was solved
-  result.hostname; // the website the challenge was solved on: compare it with yours
+  result.hostname; // the website the challenge was solved on: check it with hostnameMatches, below
   result.behavior; // { verdict, score, reasons }: refuse BehaviorVerdict.NOT_MEASURED, decide about SUSPICIOUS
 }
 ```
 
 The options also take `timeoutMs` (default 5 000) and `fetch`, to use instead of the global one.
+
+`hostnameMatches` checks `hostname` against your own websites. It takes an array, or a string with commas or white
+space between the entries such as an environment variable, and reduces each entry to its host name:
+`https://Shop.example.com/`, `shop.example.com:443` and `shop.example.com` are the same, and `*.example.com` stands
+for every subdomain of example.com but not example.com itself. An empty `hostname`, or no entries, never match.
+
+```js
+// WAU_ALLOWED_HOSTNAMES=shop.example.com,https://www.shop.example.com
+if (!result.success || !hostnameMatches(result.hostname, process.env.WAU_ALLOWED_HOSTNAMES)) {
+  // refuse: solved on another website, or WAU_ALLOWED_HOSTNAMES is not set
+}
+```
 
 `challengeType` is `"auto_check"` when the visitor passed auto_check without being shown a puzzle: the browser
 and the behaviour in it looked like a person's. A visitor it was unsure of solved a challenge of its fallback type,
