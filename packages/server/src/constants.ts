@@ -3,8 +3,8 @@
  * MOTION_NOISE hides the text in a short animated GIF of moving dots; SLIDE_PUZZLE asks to drag
  * a puzzle piece into its hole and checks that the drag moved like a hand; ANIMAL_JUMP plays two
  * rounds of 2 s in which five animal heads jump, and asks to click, in each, the one that jumps
- * highest; OBJECT_ROTATE shows, in each of two rounds, an object beside an arrow on the ground and
- * asks to turn the object a step at a time until it faces the arrow; AUTO_CHECK shows nothing to
+ * highest; OBJECT_ROTATE shows, in each of two rounds, an arrow on the ground and, in a panel apart, an object, and
+ * asks to turn the object a step at a time until it faces the way the arrow points; AUTO_CHECK shows nothing to
  * solve: it checks the browser and the behaviour in it, and shows a challenge of its fallback type
  * only when it is unsure. A token of AUTO_CHECK means the visitor passed without a puzzle; one who
  * solved the fallback has a token of the fallback's type. SLIDE_PUZZLE and ANIMAL_JUMP need a
