@@ -2,6 +2,20 @@
 
 Every release of the three packages, newest first. Versions follow [Semantic Versioning](https://semver.org/).
 
+## @waucaptcha-sdk/client 1.7.2
+
+- object_rotate asks "Turn the object to face the way the arrow points" in English, where it asked to "face the arrow":
+  the service now draws the arrow in a panel of its own beside the object, and the old words read as "turn it
+  towards that panel". The Vietnamese text is unchanged. The comments describe the two panels.
+
+## @waucaptcha-sdk/react 1.6.2
+
+- Depends on `@waucaptcha-sdk/client` ^1.7.2, for the new object_rotate prompt.
+
+## @waucaptcha-sdk/server 1.7.1
+
+- The comments of `ChallengeType` describe object_rotate's two panels, the arrow on the left and the object on the right.
+
 ## @waucaptcha-sdk/server 1.7.0
 
 - `hostnameMatches(result.hostname, allowed)`: whether the website a token was solved on is one of yours. `allowed`
