@@ -49,7 +49,7 @@ export const DEFAULT_LABELS: WidgetLabels = {
   sliderHandle: "Slider",
   jumpPrompt: "Click the animal that jumps highest",
   replay: "Replay",
-  rotatePrompt: "Turn the object to face the arrow",
+  rotatePrompt: "Turn the object to face the way the arrow points",
   rotateLeft: "Rotate left",
   rotateRight: "Rotate right",
   rotateDone: "Done",
