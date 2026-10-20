@@ -1,6 +1,6 @@
 {
   "name": "@waucaptcha-sdk/react",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "React component for WAU Captcha: <WauCaptcha />, inline or in a modal, with the token in your form.",
   "license": "MIT",
   "author": "WAU Captcha",
@@ -27,7 +27,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@waucaptcha-sdk/client": "^1.7.0"
+    "@waucaptcha-sdk/client": "^1.7.1"
   },
   "peerDependencies": {
     "react": ">=18"

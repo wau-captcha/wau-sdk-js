@@ -57,7 +57,7 @@ with its integrity hash:
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@waucaptcha-sdk/client@1.7.0/dist/wau-captcha.global.js"
+  src="https://cdn.jsdelivr.net/npm/@waucaptcha-sdk/client@1.7.1/dist/wau-captcha.global.js"
   integrity="sha384-…"
   crossorigin="anonymous"></script>
 <div data-wau-captcha data-site-key="pk_…" data-base-url="https://api.waucaptcha.com" data-lang="vi"></div>
@@ -94,8 +94,8 @@ plays each round from a `blob:` URL: a Content-Security-Policy that limits `img-
 `data:`.
 
 object_rotate shows two rounds, each a strip of `challenge.frameCount` frames of `width` × `height` side by side
-(`imageUrl`, then `secondImage`): an object beside an arrow on the ground, which the person turns a frame at a time
-until it faces the arrow. `trackRotate` shows a frame of the strip as the background of an element and returns
+(`imageUrl`, then `secondImage`): the arrow on the ground and the object in two panels; the person turns the object a frame at a time
+until it faces the way the arrow points. `trackRotate` shows a frame of the strip as the background of an element and returns
 `rotate(1)` (Rotate right), `rotate(-1)` (Rotate left) and `done()` for your controls; it records the presses the
 way the service checks them, and `verifyRotate` sends them. The widget also takes the arrow keys and Enter on the
 image, so object_rotate works with a pointer or the keyboard, but needs sight.

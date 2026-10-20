@@ -2,6 +2,25 @@
 
 Every release of the three packages, newest first. Versions follow [Semantic Versioning](https://semver.org/).
 
+## @waucaptcha-sdk/server 1.7.0
+
+- `hostnameMatches(result.hostname, allowed)`: whether the website a token was solved on is one of yours. `allowed`
+  is an array or a string with commas or white space between the entries, such as an environment variable, and each
+  entry is reduced to its host name: `https://Shop.example.com/`, `shop.example.com:443` and `shop.example.com` are
+  the same, and `*.example.com` stands for every subdomain of example.com but not example.com itself. An empty
+  hostname, or no entries, never match. Use it instead of `result.hostname !== "shop.example.com"`, which refuses
+  every token once the domain is written with `https://` or a port.
+
+## @waucaptcha-sdk/client 1.7.1
+
+- The auto_check box shows the WAU Captcha logo, the W on its app tile, where it showed a shield. The tile keeps the
+  colours of the brand, purple on light and lime on dark, whatever `--wau-captcha-primary` says.
+
+## @waucaptcha-sdk/react 1.6.1
+
+- Depends on `@waucaptcha-sdk/client` ^1.7.1. The auto_check box of `<WauCaptcha />` shows the WAU Captcha logo
+  instead of the shield.
+
 ## New package names (2026-10-17)
 
 - The packages are now published as `@waucaptcha-sdk/client`, `@waucaptcha-sdk/react` and `@waucaptcha-sdk/server`,

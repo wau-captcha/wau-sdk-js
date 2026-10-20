@@ -2,7 +2,8 @@
  * The look of the widget, shared by renderWidget and <WauCaptcha /> from @waucaptcha-sdk/react.
  * Colors follow the color-scheme of the page through light-dark(); each one can be overridden
  * with a --wau-captcha-* custom property on the widget or any ancestor, e.g.
- * `--wau-captcha-primary: #0a7`.
+ * `--wau-captcha-primary: #0a7`. The logo tile of auto_check is the exception: a logo keeps the
+ * colours of the brand, purple on light and lime on dark.
  */
 export const WIDGET_STYLES = `
 .wau-captcha{
@@ -58,7 +59,7 @@ box-shadow:0 0 0 2px var(--_primary);transform:translate(-50%,-50%);pointer-even
 .wau-captcha__mark{display:grid;justify-items:center;gap:3px;flex-shrink:0;color:var(--_muted-foreground);font-size:10px;font-weight:600;
 line-height:1;white-space:nowrap}
 .wau-captcha__mark-tile{display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;
-background:var(--_primary);color:var(--_primary-foreground)}
+background:light-dark(#7624f4,#c8ff00);color:light-dark(#fcfcfe,#03080a)}
 .wau-captcha__mark-tile .wau-captcha__icon{width:12px;height:12px}
 .wau-captcha__field{display:grid;gap:6px;font-weight:500}
 .wau-captcha__input{box-sizing:border-box;width:100%;height:40px;margin:0;padding:0 12px;border:1px solid var(--_border);border-radius:6px;

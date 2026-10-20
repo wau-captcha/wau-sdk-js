@@ -42,7 +42,7 @@ Or with the `<script>` build, pinned to an exact release and its integrity hash
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@waucaptcha-sdk/client@1.7.0/dist/wau-captcha.global.js"
+  src="https://cdn.jsdelivr.net/npm/@waucaptcha-sdk/client@1.7.1/dist/wau-captcha.global.js"
   integrity="sha384-…"
   crossorigin="anonymous"></script>
 
@@ -55,12 +55,13 @@ Or with the `<script>` build, pinned to an exact release and its integrity hash
 Once solved, the form sends the token in the hidden field `wau-captcha-token`. On your server:
 
 ```js
-import { BehaviorVerdict, WauCaptchaServer } from "@waucaptcha-sdk/server";
+import { BehaviorVerdict, WauCaptchaServer, hostnameMatches } from "@waucaptcha-sdk/server";
 
 const wau = new WauCaptchaServer({ secretKey: process.env.WAU_SECRET_KEY, baseUrl: "https://api.waucaptcha.com" });
 
 const result = await wau.verifyToken(req.body["wau-captcha-token"]);
-if (!result.success || result.hostname !== "shop.example.com") throw new Error("captcha failed");
+// Your websites, e.g. WAU_ALLOWED_HOSTNAMES=shop.example.com,https://www.shop.example.com
+if (!result.success || !hostnameMatches(result.hostname, process.env.WAU_ALLOWED_HOSTNAMES)) throw new Error("captcha failed");
 // not_measured: the client sent no behaviour data; treat it as untrusted.
 if (result.behavior.verdict !== BehaviorVerdict.HUMAN) throw new Error("please try again");
 ```
