@@ -42,7 +42,7 @@ Or with the `<script>` build, pinned to an exact release and its integrity hash
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@waucaptcha-sdk/client@1.7.2/dist/wau-captcha.global.js"
+  src="https://cdn.jsdelivr.net/npm/@waucaptcha-sdk/client@1.8.0/dist/wau-captcha.global.js"
   integrity="sha384-…"
   crossorigin="anonymous"></script>
 

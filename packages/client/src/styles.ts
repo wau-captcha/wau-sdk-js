@@ -3,7 +3,8 @@
  * Colors follow the color-scheme of the page through light-dark(); each one can be overridden
  * with a --wau-captcha-* custom property on the widget or any ancestor, e.g.
  * `--wau-captcha-primary: #0a7`. The logo tile of auto_check is the exception: a logo keeps the
- * colours of the brand, purple on light and lime on dark.
+ * colours of the brand, purple on light and lime on dark. The .wau-captcha__trigger rules stay for
+ * <WauCaptcha /> before 1.7.0, whose MODAL mode opened the dialog from a button.
  */
 export const WIDGET_STYLES = `
 .wau-captcha{
@@ -56,6 +57,14 @@ box-shadow:0 0 0 2px var(--_primary);transform:translate(-50%,-50%);pointer-even
 .wau-captcha__auto[data-tone=positive]{color:var(--_positive);font-weight:500}
 .wau-captcha__auto[data-tone=positive]>.wau-captcha__icon{color:inherit}
 .wau-captcha__auto-text{flex:1;min-width:0}
+.wau-captcha__check{display:flex;flex:1;align-items:center;gap:10px;min-width:0;margin:0;padding:0;border:0;background:none;color:inherit;
+font:inherit;line-height:1.25;text-align:left;cursor:pointer;outline:none;-webkit-tap-highlight-color:transparent}
+.wau-captcha__check[aria-checked=true]{cursor:default}
+.wau-captcha__check>.wau-captcha__icon{width:22px;height:22px}
+.wau-captcha__check-box{flex-shrink:0;box-sizing:border-box;width:22px;height:22px;border:2px solid color-mix(in srgb,var(--_foreground) 35%,transparent);
+border-radius:5px;background:var(--_background);transition:border-color .15s,box-shadow .15s}
+.wau-captcha__check:hover .wau-captcha__check-box{border-color:var(--_primary)}
+.wau-captcha__check:focus-visible .wau-captcha__check-box{border-color:var(--_primary);box-shadow:0 0 0 3px var(--_focus-ring)}
 .wau-captcha__mark{display:grid;justify-items:center;gap:3px;flex-shrink:0;color:var(--_muted-foreground);font-size:10px;font-weight:600;
 line-height:1;white-space:nowrap}
 .wau-captcha__mark-tile{display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;

@@ -29,6 +29,11 @@ default, `LIGHT` or `DARK`), `inputName` (default `"wau-captcha-token"`), `label
 Vietnamese), `timeoutMs` (per request, default 10 000), `className`, `onSuccess`, `onExpire`, `onError`. To start
 over, e.g. after your backend redeemed the token, change the component's `key`.
 
+`mode={WauCaptchaMode.MODAL}` shows, for every type but auto_check, a box like auto_check's: an empty checkbox with
+"I'm not a robot" (`labels.notRobot`) and the WAU Captcha mark. The checkbox opens the challenge in a dialog titled
+`labels.open`, which loads it only then and closes by itself once the answer is right; the box then shows the check
+and "Verified". When the token expires the checkbox is clear again.
+
 `challengeType` is `ChallengeType.IMAGE_DISTORT` (the default), `MOTION_NOISE`, `SLIDE_PUZZLE`, `ANIMAL_JUMP`,
 `OBJECT_ROTATE` or `AUTO_CHECK`. `SLIDE_PUZZLE` and `ANIMAL_JUMP` need a pointer, so keep `IMAGE_DISTORT` where keyboard-only users
 must get through; animal_jump plays its rounds from `blob:` URLs, which a Content-Security-Policy must allow in

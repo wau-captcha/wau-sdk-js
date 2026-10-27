@@ -2,15 +2,27 @@
 
 Every release of the three packages, newest first. Versions follow [Semantic Versioning](https://semver.org/).
 
-## @waucaptcha-sdk/client 1.7.2
+## @waucaptcha-sdk/client 1.8.0
 
+- The auto_check box says only "Checking…" ("Đang kiểm tra…") while it checks the visitor, where it said "Checking
+  that you are human…".
 - object_rotate asks "Turn the object to face the way the arrow points" in English, where it asked to "face the arrow":
   the service now draws the arrow in a panel of its own beside the object, and the old words read as "turn it
   towards that panel". The Vietnamese text is unchanged. The comments describe the two panels.
+- The stylesheet has the checkbox of the new MODAL box of `@waucaptcha-sdk/react` 1.7.0. The rules of the old MODAL
+  button stay, for `<WauCaptcha />` before 1.7.0.
 
-## @waucaptcha-sdk/react 1.6.2
+## @waucaptcha-sdk/react 1.7.0
 
-- Depends on `@waucaptcha-sdk/client` ^1.7.2, for the new object_rotate prompt.
+- Depends on `@waucaptcha-sdk/client` ^1.8.0.
+- `mode={WauCaptchaMode.MODAL}` shows a box like auto_check's, for every challenge type: an empty checkbox with "I'm
+  not a robot" where auto_check shows its spinner, and the WAU Captcha mark. The checkbox, or its text, opens the
+  challenge in the dialog as the button did; once the answer is right the dialog closes and the box shows the check and
+  "Verified", as auto_check does when it passes. It stays one checkbox throughout, checked at the end, so the focus
+  the dialog gives back when it closes stays on it. When the token expires the checkbox is clear again.
+- The labels gain `notRobot`, the text beside the checkbox ("Tôi không phải robot" in `VI_LABELS`); `open` is now only
+  the title of the dialog.
+- auto_check says only "Checking…", from the client.
 
 ## @waucaptcha-sdk/server 1.7.1
 

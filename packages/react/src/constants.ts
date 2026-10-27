@@ -1,4 +1,4 @@
-/** How <WauCaptcha /> shows the challenge: INLINE in place, MODAL in a dialog opened from a button. */
+/** How <WauCaptcha /> shows the challenge: INLINE in place, MODAL in a dialog opened from a checkbox. */
 export const WauCaptchaMode = {
   INLINE: "inline",
   MODAL: "modal",
