@@ -53,7 +53,7 @@ export const DEFAULT_LABELS: WidgetLabels = {
   rotateLeft: "Rotate left",
   rotateRight: "Rotate right",
   rotateDone: "Done",
-  autoChecking: "Checking that you are human…",
+  autoChecking: "Checking…",
   autoFallback: "One more step: please solve this challenge.",
 };
 
@@ -78,7 +78,7 @@ export const VI_LABELS: WidgetLabels = {
   rotateLeft: "Xoay trái",
   rotateRight: "Xoay phải",
   rotateDone: "Xong",
-  autoChecking: "Đang kiểm tra bạn là người…",
+  autoChecking: "Đang kiểm tra…",
   autoFallback: "Cần thêm một bước: hãy giải captcha này.",
 };
 

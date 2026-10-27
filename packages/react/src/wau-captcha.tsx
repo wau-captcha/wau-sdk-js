@@ -6,8 +6,8 @@ import { CaptchaDialog } from "./captcha-dialog.js";
 import { CaptchaStyles } from "./captcha-styles.js";
 import { ChallengePanel } from "./challenge-panel.js";
 import { WauCaptchaMode, WauCaptchaTheme } from "./constants.js";
-import { CheckIcon, ShieldIcon } from "./icons.js";
 import { DEFAULT_LABELS, type WauCaptchaLabels } from "./labels.js";
+import { ModalCheck } from "./modal-check.js";
 import { CaptchaNotice, CaptchaStatus, useCaptcha } from "./use-captcha.js";
 
 export type WauCaptchaProps = {
@@ -16,7 +16,8 @@ export type WauCaptchaProps = {
   /** Address of the WAU Captcha gateway, e.g. https://captcha.example.com. */
   baseUrl: string;
   /**
-   * INLINE (default) shows the challenge in place; MODAL shows a button that opens it in a dialog.
+   * INLINE (default) shows the challenge in place; MODAL shows a box like auto_check's, with a
+   * checkbox that opens the challenge in a dialog and is checked, with Verified, once it is solved.
    * ChallengeType.AUTO_CHECK always runs inline, MODAL or not: most visitors have nothing to open.
    */
   mode?: WauCaptchaMode | undefined;
@@ -44,7 +45,7 @@ export type WauCaptchaProps = {
   /** Called with the token of a correct answer; your backend redeems it with @waucaptcha-sdk/server. */
   onSuccess?: ((token: string) => void) | undefined;
   /**
-   * Called when the token expires unused. INLINE starts over by itself; MODAL waits for the button;
+   * Called when the token expires unused. INLINE starts over by itself; MODAL clears its checkbox;
    * AUTO_CHECK checks again on the visitor's next action in the page.
    */
   onExpire?: (() => void) | undefined;
@@ -96,10 +97,7 @@ export function WauCaptcha({
       <CaptchaStyles />
       {modal ? (
         <>
-          <button type="button" className="wau-captcha__trigger" aria-haspopup="dialog" disabled={verified} onClick={openDialog}>
-            {verified ? <CheckIcon /> : <ShieldIcon />}
-            {verified ? labels.verified : labels.open}
-          </button>
+          <ModalCheck verified={verified} labels={labels} onOpen={openDialog} />
           {captcha.notice === CaptchaNotice.EXPIRED && !open && (
             <p className="wau-captcha__status" role="status">
               {labels.expired}
